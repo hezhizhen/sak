@@ -1,5 +1,5 @@
 /*
-Copyright © 2020 NAME HERE <EMAIL ADDRESS>
+Copyright © 2020 hezhizhen <hezhizhen.yi@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,11 +29,8 @@ var cfgFile string
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "sak",
-	Short: "Swiss Army Knife",
-	Long:  `A collection of tools that I use everyday.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+	Short: "A collection of tools that I use everyday.",
+	Long:  `Swiss Army Knife`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
