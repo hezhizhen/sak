@@ -9,6 +9,7 @@ import (
 func main() {
 	cmd := &cobra.Command{
 		Use:          "sak [command]",
+		Short:        "My tool set",
 		SilenceUsage: true,
 	}
 	cmd.AddCommand(versionCmd())

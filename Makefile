@@ -31,3 +31,7 @@ build-mac:
 build-linux:
 	GOARCH=amd64 CGO_ENABLED=0 GOOS=linux go build -v --ldflags="$(LDFLAGS)" \
 		-o bin/$(CLI_EXE) $(CLI_PKG)
+
+update-local:
+	go install ./...
+	sak completion fish > ~/.config/fish/completions/sak.fish
