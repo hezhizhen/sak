@@ -1,19 +1,24 @@
 package main
 
 import (
-	"os"
-
 	"github.com/spf13/cobra"
 )
 
 func main() {
 	cmd := &cobra.Command{
-		Use:          "sak [command]",
-		Short:        "My tool set",
-		SilenceUsage: true,
+		Use:   "sak",
+		Short: "My tool set",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cmd.Help()
+		},
+		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
+
 	cmd.AddCommand(versionCmd())
-	if err := cmd.Execute(); err != nil {
-		os.Exit(1)
+
+	err := cmd.Execute()
+	if err != nil {
+		panic(err)
 	}
 }
