@@ -1,1 +1,1 @@
-FROM docker.io/library/golang:1.16.3-alpine
+FROM golang:1.23
