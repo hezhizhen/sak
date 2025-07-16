@@ -1,3 +1,4 @@
+// Package version provides versioning information for the sak application.
 package version
 
 var (

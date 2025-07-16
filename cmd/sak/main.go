@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/hezhizhen/sak/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -17,8 +18,5 @@ func main() {
 
 	cmd.AddCommand(versionCmd())
 
-	err := cmd.Execute()
-	if err != nil {
-		panic(err)
-	}
+	utils.CheckError(cmd.Execute())
 }
