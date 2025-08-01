@@ -11,7 +11,8 @@ import (
 )
 
 func worktimeCmd() *cobra.Command {
-	var today, thisWeek, thisMonth, lastWeek, lastMonth bool
+	var today, thisWeek, thisMonth, lastWeek, lastMonth, thisYear, lastYear, all bool
+	var pastDays int
 
 	cmd := &cobra.Command{
 		Use:   "worktime",
@@ -24,11 +25,18 @@ Examples:
   sak worktime --this-month   # Show this month's average work duration
   sak worktime --last-week    # Show last week's average work duration
   sak worktime --last-month   # Show last month's average work duration
+  sak worktime --this-year    # Show this year's average work duration
+  sak worktime --last-year    # Show last year's average work duration
+  sak worktime --all          # Show all time average work duration
+  sak worktime --past-days 7  # Show average for past 7 days
 `,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// Check if past-days was explicitly set
+			pastDaysSet := cmd.Flags().Changed("past-days")
+			
 			// Ensure only one flag is set
-			flags := []bool{today, thisWeek, thisMonth, lastWeek, lastMonth}
+			flags := []bool{today, thisWeek, thisMonth, lastWeek, lastMonth, thisYear, lastYear, all}
 			flagCount := 0
 			for _, flag := range flags {
 				if flag {
@@ -36,15 +44,25 @@ Examples:
 				}
 			}
 
+			// Add pastDays to flag count if it's specified
+			if pastDaysSet {
+				flagCount++
+			}
+
 			if flagCount == 0 {
-				return fmt.Errorf("please specify one of: --today, --this-week, --this-month, --last-week, --last-month")
+				return fmt.Errorf("please specify one of: --today, --this-week, --this-month, --last-week, --last-month, --this-year, --last-year, --all, or --past-days")
 			}
 
 			if flagCount > 1 {
 				return fmt.Errorf("please specify only one flag at a time")
 			}
 
-			return runWorktime(today, thisWeek, thisMonth, lastWeek, lastMonth)
+			// Validate pastDays value if set
+			if pastDaysSet && pastDays <= 0 {
+				return fmt.Errorf("past-days must be a positive number")
+			}
+
+			return runWorktime(today, thisWeek, thisMonth, lastWeek, lastMonth, thisYear, lastYear, all, pastDays, pastDaysSet)
 		},
 	}
 
@@ -53,11 +71,15 @@ Examples:
 	cmd.Flags().BoolVar(&thisMonth, "this-month", false, "Show this month's average work duration")
 	cmd.Flags().BoolVar(&lastWeek, "last-week", false, "Show last week's average work duration")
 	cmd.Flags().BoolVar(&lastMonth, "last-month", false, "Show last month's average work duration")
+	cmd.Flags().BoolVar(&thisYear, "this-year", false, "Show this year's average work duration")
+	cmd.Flags().BoolVar(&lastYear, "last-year", false, "Show last year's average work duration")
+	cmd.Flags().BoolVar(&all, "all", false, "Show all time average work duration")
+	cmd.Flags().IntVar(&pastDays, "past-days", 0, "Show average for past N days")
 
 	return cmd
 }
 
-func runWorktime(today, thisWeek, thisMonth, lastWeek, lastMonth bool) error {
+func runWorktime(today, thisWeek, thisMonth, lastWeek, lastMonth, thisYear, lastYear, all bool, pastDays int, pastDaysSet bool) error {
 	// Check if worktime.csv exists
 	if _, err := os.Stat("worktime.csv"); os.IsNotExist(err) {
 		return fmt.Errorf("worktime.csv not found in current directory")
@@ -83,6 +105,14 @@ func runWorktime(today, thisWeek, thisMonth, lastWeek, lastMonth bool) error {
 		return showLastWeekAverage(records, now)
 	case lastMonth:
 		return showLastMonthAverage(records, now)
+	case thisYear:
+		return showThisYearAverage(records, now)
+	case lastYear:
+		return showLastYearAverage(records, now)
+	case all:
+		return showAllTimeAverage(records)
+	case pastDaysSet:
+		return showPastDaysAverage(records, now, pastDays)
 	}
 
 	return nil
@@ -171,5 +201,83 @@ func showLastMonthAverage(records []work.Record, now time.Time) error {
 	}
 
 	fmt.Printf("Last month average (%d days): %s\n", count, utils.FormatDuration(average))
+	return nil
+}
+
+func showThisYearAverage(records []work.Record, now time.Time) error {
+	startOfYear := time.Date(now.Year(), 1, 1, 0, 0, 0, 0, now.Location())
+	endOfYear := now
+	endOfYear = time.Date(endOfYear.Year(), endOfYear.Month(), endOfYear.Day(), 23, 59, 59, 0, endOfYear.Location())
+
+	average, count, err := work.CalculateAverageForRecords(records, startOfYear, endOfYear)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("This year average (%d days): %s\n", count, utils.FormatDuration(average))
+	return nil
+}
+
+func showLastYearAverage(records []work.Record, now time.Time) error {
+	startOfLastYear := time.Date(now.Year()-1, 1, 1, 0, 0, 0, 0, now.Location())
+	endOfLastYear := time.Date(now.Year()-1, 12, 31, 23, 59, 59, 0, now.Location())
+
+	average, count, err := work.CalculateAverageForRecords(records, startOfLastYear, endOfLastYear)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Last year average (%d days): %s\n", count, utils.FormatDuration(average))
+	return nil
+}
+
+func showAllTimeAverage(records []work.Record) error {
+	if len(records) == 0 {
+		return fmt.Errorf("no work time data found")
+	}
+
+	// Find the earliest and latest dates
+	earliest := records[0].Date
+	latest := records[0].Date
+	for _, record := range records {
+		if record.Date.Before(earliest) {
+			earliest = record.Date
+		}
+		if record.Date.After(latest) {
+			latest = record.Date
+		}
+	}
+
+	// Set time bounds for the full range
+	startTime := time.Date(earliest.Year(), earliest.Month(), earliest.Day(), 0, 0, 0, 0, earliest.Location())
+	endTime := time.Date(latest.Year(), latest.Month(), latest.Day(), 23, 59, 59, 0, latest.Location())
+
+	average, count, err := work.CalculateAverageForRecords(records, startTime, endTime)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("All time average (%d days): %s\n", count, utils.FormatDuration(average))
+	return nil
+}
+
+func showPastDaysAverage(records []work.Record, now time.Time, days int) error {
+	if days <= 0 {
+		return fmt.Errorf("past-days must be a positive number")
+	}
+
+	// Calculate the start date (N days ago from today)
+	startDate := now.AddDate(0, 0, -days+1) // +1 because we want to include today
+	startTime := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, startDate.Location())
+	
+	// End time is end of today
+	endTime := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, now.Location())
+
+	average, count, err := work.CalculateAverageForRecords(records, startTime, endTime)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Past %d days average (%d days): %s\n", days, count, utils.FormatDuration(average))
 	return nil
 }
