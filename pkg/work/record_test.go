@@ -42,3 +42,44 @@ func Test_parseDate(t *testing.T) {
 		})
 	}
 }
+
+func Test_parseSingleRecord(t *testing.T) {
+	tests := []struct {
+		name    string
+		dateStr string
+		startStr string
+		endStr  string
+		wantErr bool
+	}{
+		{
+			name:     "valid record",
+			dateStr:  "2025-07-16 Wednesday",
+			startStr: "09:00:00",
+			endStr:   "17:00:00",
+			wantErr:  false,
+		},
+		{
+			name:     "missing end time",
+			dateStr:  "2025-07-16 Wednesday",
+			startStr: "09:00:00",
+			endStr:   "",
+			wantErr:  true,
+		},
+		{
+			name:     "missing start time",
+			dateStr:  "2025-07-16 Wednesday",
+			startStr: "",
+			endStr:   "17:00:00",
+			wantErr:  true,
+		},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := parseSingleRecord(tt.dateStr, tt.startStr, tt.endStr)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseSingleRecord() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

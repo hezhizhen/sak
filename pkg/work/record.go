@@ -50,7 +50,9 @@ func ParseRecordsFromFile(filename string) ([]Record, error) {
 
 		record, err := parseSingleRecord(row[0], row[1], row[2])
 		if err != nil {
-			return nil, fmt.Errorf("error parsing row %d: %v", i+1, err)
+			// Skip records with missing or invalid data instead of failing
+			fmt.Printf("Warning: skipping row %d due to missing/invalid data: %v\n", i+1, err)
+			continue
 		}
 
 		records = append(records, record)
@@ -70,6 +72,14 @@ func parseSingleRecord(dateStr, startStr, endStr string) (Record, error) {
 	date, err := time.Parse("2006-01-02", dateParts[0])
 	if err != nil {
 		return Record{}, fmt.Errorf("failed to parse date %s: %v", dateParts[0], err)
+	}
+
+	// Skip records with missing start or end times
+	if strings.TrimSpace(startStr) == "" {
+		return Record{}, fmt.Errorf("missing start time")
+	}
+	if strings.TrimSpace(endStr) == "" {
+		return Record{}, fmt.Errorf("missing end time")
 	}
 
 	// Parse start time
