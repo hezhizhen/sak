@@ -190,8 +190,8 @@ func CalculateAverageForRecords(records []Record, start, end time.Time) (time.Du
 			if record.Normal {
 				durationForAverage = record.Duration
 			} else {
-				// Use 9 hours (9 * time.Hour) for leave days in average calculation
-				durationForAverage = 9 * time.Hour
+				// Use 9 hours for leave days in average calculation
+				durationForAverage = minWorkHours * time.Hour
 			}
 
 			totalDuration += durationForAverage
