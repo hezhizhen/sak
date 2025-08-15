@@ -145,16 +145,16 @@ func Test_parseSingleRecord(t *testing.T) {
 		{
 			name: "normal work day",
 			args: args{
-				dateStr:  "2023-07-31 Monday",
-				startStr: "10:41:42",
-				endStr:   "19:41:04",
+				dateStr:  "2025-08-15 Friday",
+				startStr: "09:41:42",
+				endStr:   "19:41:43",
 			},
 			want: Record{
-				Date:     time.Date(2023, 7, 31, 0, 0, 0, 0, time.UTC),
-				Start:    time.Date(2023, 7, 31, 10, 41, 42, 0, time.UTC),
-				End:      time.Date(2023, 7, 31, 19, 41, 4, 0, time.UTC),
-				Duration: time.Duration(8*time.Hour + 59*time.Minute + 22*time.Second),
-				Normal:   true, // hasLeave returns false, so Normal should be true
+				Date:     time.Date(2025, 8, 15, 0, 0, 0, 0, time.UTC),
+				Start:    time.Date(2025, 8, 15, 9, 41, 42, 0, time.UTC),
+				End:      time.Date(2025, 8, 15, 19, 41, 43, 0, time.UTC),
+				Duration: 10*time.Hour + 1*time.Second,
+				Normal:   true,
 			},
 			wantErr: false,
 		},
