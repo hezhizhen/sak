@@ -97,10 +97,10 @@ func Test_hasLeave(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "leave day: 14-20",
+			name: "leave day: 14-23",
 			args: args{
 				start: date.Add(time.Hour * 14),
-				end:   date.Add(time.Hour * 20),
+				end:   date.Add(time.Hour * 23),
 			},
 			want: true,
 		},
