@@ -158,6 +158,22 @@ func Test_parseSingleRecord(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "leave day",
+			args: args{
+				dateStr:  "2025-08-15 Friday",
+				startStr: "14:30:00",
+				endStr:   "20:35:00",
+			},
+			want: Record{
+				Date:     time.Date(2025, 8, 15, 0, 0, 0, 0, time.UTC),
+				Start:    time.Date(2025, 8, 15, 14, 30, 0, 0, time.UTC),
+				End:      time.Date(2025, 8, 15, 20, 35, 0, 0, time.UTC),
+				Duration: 6*time.Hour + 5*time.Minute,
+				Normal:   false, // Leave day
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
