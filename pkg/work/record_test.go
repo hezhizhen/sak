@@ -243,8 +243,6 @@ func Test_CalculateAverageForRecords(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Redirect stdout to avoid test output pollution
-			// We're testing the calculation logic, not the print statements
 			gotAverage, gotCount, err := CalculateAverageForRecords(tt.args.records, tt.args.start, tt.args.end)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CalculateAverageForRecords() error = %v, wantErr %v", err, tt.wantErr)
