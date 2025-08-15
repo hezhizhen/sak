@@ -67,22 +67,17 @@ func ParseRecordsFromFile(filename string) ([]Record, error) {
 }
 
 // hasLeave determines if there is leave on a given day based on start and end.
+// leave cases:
+// - start > 12:00
+// - end < 17:00
+// - duration < 9 hours
 func hasLeave(start, end time.Time) bool {
-	// If start time is after 12:00, it must be a leave day.
-	if start.Hour() > afternoonStartHour || (start.Hour() == afternoonStartHour && start.Minute() > 0) {
-		return true
-	}
-	// If end time is before 17:00, it must be a leave day.
-	if end.Hour() < earlyEndHour {
-		return true
-	}
+	afternoonStart := time.Date(start.Year(), start.Month(), start.Day(), afternoonStartHour, 0, 0, 0, start.Location())
+	earlyEnd := time.Date(end.Year(), end.Month(), end.Day(), earlyEndHour, 0, 0, 0, end.Location())
 
-	// if the duration is less than 9 hours, it is considered a leave day.
-	if end.Sub(start).Hours() < minWorkHours {
-		return true
-	}
-
-	return false
+	return start.After(afternoonStart) ||
+		end.Before(earlyEnd) ||
+		end.Sub(start).Hours() < minWorkHours
 }
 
 // parseSingleRecord parses a single record from the CSV file.
