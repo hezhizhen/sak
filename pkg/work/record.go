@@ -11,6 +11,12 @@ import (
 	"github.com/hezhizhen/sak/pkg/utils"
 )
 
+const (
+	afternoonStartHour = 12
+	earlyEndHour       = 17
+	minWorkHours       = 9
+)
+
 type Record struct {
 	Date     time.Time
 	Start    time.Time
@@ -63,16 +69,16 @@ func ParseRecordsFromFile(filename string) ([]Record, error) {
 // hasLeave determines if there is leave on a given day based on start and end.
 func hasLeave(start, end time.Time) bool {
 	// If start time is after 12:00, it must be a leave day.
-	if start.Hour() > 12 || (start.Hour() == 12 && start.Minute() > 0) {
+	if start.Hour() > afternoonStartHour || (start.Hour() == afternoonStartHour && start.Minute() > 0) {
 		return true
 	}
 	// If end time is before 17:00, it must be a leave day.
-	if end.Hour() < 17 {
+	if end.Hour() < earlyEndHour {
 		return true
 	}
 
 	// if the duration is less than 9 hours, it is considered a leave day.
-	if end.Sub(start).Hours() < 9 {
+	if end.Sub(start).Hours() < minWorkHours {
 		return true
 	}
 
