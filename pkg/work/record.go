@@ -16,6 +16,7 @@ type Record struct {
 	Start    time.Time
 	End      time.Time
 	Duration time.Duration
+	Normal   bool // if it is false, use fixed duration (9h, 10-19) instead
 }
 
 // ParseRecordsFromFile parses a CSV file containing work records.
@@ -59,6 +60,25 @@ func ParseRecordsFromFile(filename string) ([]Record, error) {
 	return records, nil
 }
 
+// hasLeave determines if there is leave on a given day based on start and end.
+func hasLeave(start, end time.Time) bool {
+	// If start time is after 12:00, it must be a leave day.
+	if start.Hour() >= 12 && start.Minute() > 0 {
+		return true
+	}
+	// If end time is before 17:00, it must be a leave day.
+	if end.Hour() < 17 {
+		return true
+	}
+
+	// if the duration is less than 9 hours, it is considered a leave day.
+	if end.Sub(start).Hours() < 9 {
+		return true
+	}
+
+	return false
+}
+
 // parseSingleRecord parses a single record from the CSV file.
 func parseSingleRecord(dateStr, startStr, endStr string) (Record, error) {
 	// Parse date (format: "2025-07-16 Wednesday")
@@ -92,11 +112,15 @@ func parseSingleRecord(dateStr, startStr, endStr string) (Record, error) {
 		duration = endTime.Sub(startTime)
 	}
 
+	// Determine if this day has leave
+	isLeaveDay := hasLeave(startTime, endTime)
+
 	return Record{
 		Date:     date,
 		Start:    startTime,
 		End:      endTime,
 		Duration: duration,
+		Normal:   !isLeaveDay, // Normal is true when there's no leave
 	}, nil
 }
 
@@ -142,7 +166,8 @@ func parseTimeOnDate(date time.Time, timeStr string) (time.Time, error) {
 	return time.Date(date.Year(), date.Month(), date.Day(), hour, minute, second, 0, date.Location()), nil
 }
 
-// CalculateAverageForRecords calculates the average work time for the given records
+// CalculateAverageForRecords calculates the average work time for the given records.
+// For leave days (Normal = false), it uses 9 hours in the average calculation instead of actual duration.
 func CalculateAverageForRecords(records []Record, start, end time.Time) (time.Duration, int, error) {
 	var totalDuration time.Duration
 	count := 0
@@ -154,7 +179,16 @@ func CalculateAverageForRecords(records []Record, start, end time.Time) (time.Du
 			// Display each selected day's work time
 			fmt.Printf("%2d %s: %s\n", count+1, record.Date.Format("2006-01-02"), utils.FormatDuration(record.Duration))
 
-			totalDuration += record.Duration
+			// For average calculation: use 9h for leave days, actual duration for normal days
+			var durationForAverage time.Duration
+			if record.Normal {
+				durationForAverage = record.Duration
+			} else {
+				// Use 9 hours (9 * time.Hour) for leave days in average calculation
+				durationForAverage = 9 * time.Hour
+			}
+
+			totalDuration += durationForAverage
 			count++
 		}
 	}
