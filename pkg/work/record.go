@@ -63,7 +63,7 @@ func ParseRecordsFromFile(filename string) ([]Record, error) {
 // hasLeave determines if there is leave on a given day based on start and end.
 func hasLeave(start, end time.Time) bool {
 	// If start time is after 12:00, it must be a leave day.
-	if start.Hour() >= 12 && start.Minute() > 0 {
+	if start.Hour() > 12 || (start.Hour() == 12 && start.Minute() > 0) {
 		return true
 	}
 	// If end time is before 17:00, it must be a leave day.
