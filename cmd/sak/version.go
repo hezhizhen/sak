@@ -75,7 +75,6 @@ func runVersion(jsonOutput, shortOutput bool) error {
 	// Go information section
 	items = append(items, []string{"Go Version", buildInfo.GoVersion})
 	items = append(items, []string{"Platform", fmt.Sprintf("%s/%s", buildInfo.GOOS, buildInfo.GOARCH)})
-	items = append(items, []string{"CPU Count", fmt.Sprintf("%d", buildInfo.NumCPU)})
 
 	// Find the maximum label width for alignment
 	maxWidth := 0
