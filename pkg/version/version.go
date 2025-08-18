@@ -44,8 +44,14 @@ func GetBuildInfo() BuildInfo {
 		GitTag:       GitTag,
 		GitTreeState: GitTreeState,
 		BuildDate:    BuildDate,
-		GoVersion:    GoVersion,
-		GOOS:         runtime.GOOS,
-		GOARCH:       runtime.GOARCH,
+		GoVersion: func() string {
+			// use runtime version as default
+			if GoVersion != "" {
+				return GoVersion
+			}
+			return runtime.Version()
+		}(),
+		GOOS:   runtime.GOOS,
+		GOARCH: runtime.GOARCH,
 	}
 }
