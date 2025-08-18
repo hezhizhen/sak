@@ -40,5 +40,5 @@ build-linux:
 		-o bin/$(CLI_EXE) $(CLI_PKG)
 
 update-local:
-	go install ./...
+	go install -v --ldflags="$(LDFLAGS)" ./...
 	sak completion fish > ~/.config/fish/completions/sak.fish
