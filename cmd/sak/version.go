@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
-	"time"
 
 	"github.com/hezhizhen/sak/pkg/version"
 	"github.com/spf13/cobra"
@@ -97,9 +95,6 @@ func runVersion(jsonOutput, shortOutput bool) error {
 		}
 	}
 
-	// Current time
-	items = append(items, []string{"Current Time", time.Now().Format("2006-01-02 15:04:05 MST")})
-
 	// Find the maximum label width for alignment
 	maxWidth := 0
 	for _, item := range items {
@@ -110,7 +105,7 @@ func runVersion(jsonOutput, shortOutput bool) error {
 
 	// Print formatted output
 	for _, item := range items {
-		fmt.Printf("%s: %s%s\n", item[0], strings.Repeat(" ", maxWidth-len(item[0])), item[1])
+		fmt.Printf("%-*s: %s\n", maxWidth, item[0], item[1])
 	}
 
 	return nil
