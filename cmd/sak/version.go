@@ -48,24 +48,11 @@ func runVersion(jsonOutput, shortOutput bool) error {
 
 	if jsonOutput {
 		// Add runtime information for JSON output
-		jsonData := map[string]interface{}{
-			"version":       buildInfo.Version,
-			"gitCommit":     buildInfo.GitCommit,
-			"gitBranch":     buildInfo.GitBranch,
-			"gitTag":        buildInfo.GitTag,
-			"gitTreeState":  buildInfo.GitTreeState,
-			"buildDate":     buildInfo.BuildDate,
-			"goVersion":     buildInfo.GoVersion,
-			"goRuntime":     buildInfo.GoRuntime,
-			"goos":          buildInfo.GOOS,
-			"goarch":        buildInfo.GOARCH,
-			"numCPU":        buildInfo.NumCPU,
-			"buildMetadata": buildInfo.BuildMetadata,
-		}
+		jsonData := buildInfo
 
 		// Add executable path if available
 		if execPath, err := os.Executable(); err == nil {
-			jsonData["executablePath"] = execPath
+			jsonData.ExecutablePath = execPath
 		}
 
 		encoder := json.NewEncoder(os.Stdout)
