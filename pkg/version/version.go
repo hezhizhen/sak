@@ -25,13 +25,13 @@ var (
 // BuildInfo contains all build-time information
 type BuildInfo struct {
 	Version      string `json:"version"`
-	GitCommit    string `json:"gitCommit,omitempty"`
+	GitCommit    string `json:"gitCommit"`
 	GitBranch    string `json:"gitBranch,omitempty"`
 	GitTag       string `json:"gitTag,omitempty"`
-	GitTreeState string `json:"gitTreeState,omitempty"`
-	BuildDate    string `json:"buildDate,omitempty"`
-	GoVersion    string `json:"goVersion,omitempty"`
-	GOOS         string `json:"goos,omitempty"`
+	GitTreeState string `json:"gitTreeState"`
+	BuildDate    string `json:"buildDate"`
+	GoVersion    string `json:"goVersion"`
+	GOOS         string `json:"goos"`
 	GOARCH       string `json:"goarch"`
 }
 
