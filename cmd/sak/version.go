@@ -1,16 +1,21 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"runtime"
+	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/hezhizhen/sak/pkg/version"
-
 	"github.com/spf13/cobra"
 )
 
 func versionCmd() *cobra.Command {
+	var jsonOutput bool
+	var shortOutput bool
+
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Show the sak version information",
@@ -18,36 +23,107 @@ func versionCmd() *cobra.Command {
 
 Example - print version:
   sak version
+  sak version --json
+  sak version --short
 `,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runVersion()
+			return runVersion(jsonOutput, shortOutput)
 		},
 	}
+
+	cmd.Flags().BoolVar(&jsonOutput, "json", false, "Output version information in JSON format")
+	cmd.Flags().BoolVar(&shortOutput, "short", false, "Output only the version number")
 
 	return cmd
 }
 
-func runVersion() error {
-	items := [][]string{
-		{"Version", version.GetVersion()},
-		{"Go version", runtime.Version()},
-	}
-	if version.GitCommit != "" {
-		items = append(items, []string{"Git commit", version.GitCommit})
-	}
-	if version.GitTreeState != "" {
-		items = append(items, []string{"Git tree state", version.GitTreeState})
+func runVersion(jsonOutput, shortOutput bool) error {
+	buildInfo := version.GetBuildInfo()
+
+	if shortOutput {
+		fmt.Println(buildInfo.Version)
+		return nil
 	}
 
-	size := 0
-	for _, item := range items {
-		if length := len(item[0]); length > size {
-			size = length
+	if jsonOutput {
+		// Add runtime information for JSON output
+		jsonData := map[string]interface{}{
+			"version":       buildInfo.Version,
+			"gitCommit":     buildInfo.GitCommit,
+			"gitBranch":     buildInfo.GitBranch,
+			"gitTag":        buildInfo.GitTag,
+			"gitTreeState":  buildInfo.GitTreeState,
+			"buildDate":     buildInfo.BuildDate,
+			"goVersion":     buildInfo.GoVersion,
+			"goRuntime":     buildInfo.GoRuntime,
+			"goos":          buildInfo.GOOS,
+			"goarch":        buildInfo.GOARCH,
+			"numCPU":        buildInfo.NumCPU,
+			"buildMetadata": buildInfo.BuildMetadata,
+		}
+
+		// Add executable path if available
+		if execPath, err := os.Executable(); err == nil {
+			jsonData["executablePath"] = execPath
+		}
+
+		encoder := json.NewEncoder(os.Stdout)
+		encoder.SetIndent("", "  ")
+		return encoder.Encode(jsonData)
+	}
+
+	// Standard formatted output
+	items := [][]string{
+		{"Version", buildInfo.Version},
+	}
+
+	// Build information section
+	if buildInfo.BuildDate != "" {
+		items = append(items, []string{"Build Date", buildInfo.BuildDate})
+	}
+	// Git information section
+	if buildInfo.GitCommit != "" {
+		items = append(items, []string{"Git Commit", buildInfo.GitCommit})
+	}
+	if buildInfo.GitBranch != "" {
+		items = append(items, []string{"Git Branch", buildInfo.GitBranch})
+	}
+	if buildInfo.GitTag != "" {
+		items = append(items, []string{"Git Tag", buildInfo.GitTag})
+	}
+	if buildInfo.GitTreeState != "" {
+		items = append(items, []string{"Git Tree State", buildInfo.GitTreeState})
+	}
+
+	// Go information section
+	items = append(items, []string{"Go Version (build)", buildInfo.GoVersion})
+	items = append(items, []string{"Go Version (runtime)", buildInfo.GoRuntime})
+	items = append(items, []string{"Platform", fmt.Sprintf("%s/%s", buildInfo.GOOS, buildInfo.GOARCH)})
+	items = append(items, []string{"CPU Count", fmt.Sprintf("%d", buildInfo.NumCPU)})
+
+	// Runtime information
+	if execPath, err := os.Executable(); err == nil {
+		items = append(items, []string{"Executable Path", execPath})
+		if absPath, err := filepath.Abs(execPath); err == nil && absPath != execPath {
+			items = append(items, []string{"Absolute Path", absPath})
 		}
 	}
+
+	// Current time
+	items = append(items, []string{"Current Time", time.Now().Format("2006-01-02 15:04:05 MST")})
+
+	// Find the maximum label width for alignment
+	maxWidth := 0
 	for _, item := range items {
-		fmt.Println(item[0] + ": " + strings.Repeat(" ", size-len(item[0])) + item[1])
+		if len(item[0]) > maxWidth {
+			maxWidth = len(item[0])
+		}
+	}
+
+	// Print formatted output
+	for _, item := range items {
+		fmt.Printf("%s: %s%s\n", item[0], strings.Repeat(" ", maxWidth-len(item[0])), item[1])
 	}
 
 	return nil
