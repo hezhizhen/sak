@@ -6,7 +6,7 @@ GIT_BRANCH  = $(shell git rev-parse --abbrev-ref HEAD)
 GIT_TAG     = $(shell git describe --tags --abbrev=0 --exact-match 2>/dev/null)
 GIT_DIRTY   = $(shell test -n "`git status --porcelain`" && echo "dirty" || echo "clean")
 BUILD_DATE  = $(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
-GO_VERSION  = $(shell go version | cut -d' ' -f3)
+GO_VERSION  = $(shell go env GOVERSION)
 LDFLAGS = -w
 ifdef VERSION
 LDFLAGS += -X '$(PROJECT_PKG)/pkg/version.BuildMetadata=$(VERSION)'
