@@ -9,10 +9,10 @@ BUILD_DATE  = $(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
 GO_VERSION  = $(shell go env GOVERSION)
 LDFLAGS = -w
 ifdef VERSION
-LDFLAGS += -X '$(PROJECT_PKG)/pkg/version.BuildMetadata=$(VERSION)'
+	LDFLAGS += -X '$(PROJECT_PKG)/pkg/version.BuildMetadata=$(VERSION)'
 endif
 ifneq ($(GIT_TAG),)
-LDFLAGS += -X '$(PROJECT_PKG)/pkg/version.BuildMetadata='
+	LDFLAGS += -X '$(PROJECT_PKG)/pkg/version.BuildMetadata='
 endif
 LDFLAGS += -X '$(PROJECT_PKG)/pkg/version.GitCommit=$(GIT_COMMIT)'
 LDFLAGS += -X '$(PROJECT_PKG)/pkg/version.GitBranch=$(GIT_BRANCH)'
