@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/hezhizhen/sak/pkg/version"
 	"github.com/spf13/cobra"
@@ -45,17 +44,9 @@ func runVersion(jsonOutput, shortOutput bool) error {
 	}
 
 	if jsonOutput {
-		// Add runtime information for JSON output
-		jsonData := buildInfo
-
-		// Add executable path if available
-		if execPath, err := os.Executable(); err == nil {
-			jsonData.ExecutablePath = execPath
-		}
-
 		encoder := json.NewEncoder(os.Stdout)
 		encoder.SetIndent("", "  ")
-		return encoder.Encode(jsonData)
+		return encoder.Encode(buildInfo)
 	}
 
 	// Standard formatted output
@@ -82,18 +73,9 @@ func runVersion(jsonOutput, shortOutput bool) error {
 	}
 
 	// Go information section
-	items = append(items, []string{"Go Version (build)", buildInfo.GoVersion})
-	items = append(items, []string{"Go Version (runtime)", buildInfo.GoRuntime})
+	items = append(items, []string{"Go Version", buildInfo.GoVersion})
 	items = append(items, []string{"Platform", fmt.Sprintf("%s/%s", buildInfo.GOOS, buildInfo.GOARCH)})
 	items = append(items, []string{"CPU Count", fmt.Sprintf("%d", buildInfo.NumCPU)})
-
-	// Runtime information
-	if execPath, err := os.Executable(); err == nil {
-		items = append(items, []string{"Executable Path", execPath})
-		if absPath, err := filepath.Abs(execPath); err == nil && absPath != execPath {
-			items = append(items, []string{"Absolute Path", absPath})
-		}
-	}
 
 	// Find the maximum label width for alignment
 	maxWidth := 0
