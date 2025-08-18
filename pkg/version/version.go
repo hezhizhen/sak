@@ -34,18 +34,18 @@ func GetVersion() string {
 
 // BuildInfo contains all build-time information
 type BuildInfo struct {
-	Version       string
-	GitCommit     string
-	GitBranch     string
-	GitTag        string
-	GitTreeState  string
-	BuildDate     string
-	GoVersion     string
-	GoRuntime     string
-	GOOS          string
-	GOARCH        string
-	NumCPU        int
-	BuildMetadata string
+	Version       string `json:"version"`
+	GitCommit     string `json:"gitCommit,omitempty"`
+	GitBranch     string `json:"gitBranch,omitempty"`
+	GitTag        string `json:"gitTag,omitempty"`
+	GitTreeState  string `json:"gitTreeState,omitempty"`
+	BuildDate     string `json:"buildDate,omitempty"`
+	GoVersion     string `json:"goVersion,omitempty"`
+	GoRuntime     string `json:"goRuntime,omitempty"`
+	GOOS          string `json:"goos,omitempty"`
+	GOARCH        string `json:"goarch"`
+	NumCPU        int    `json:"numCPU"`
+	BuildMetadata string `json:"buildMetadata,omitempty"`
 }
 
 // GetBuildInfo returns comprehensive build and runtime information
