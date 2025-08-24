@@ -178,8 +178,7 @@ func showLastMonthAverage(records []work.Record, now time.Time) error {
 
 func showThisYearAverage(records []work.Record, now time.Time) error {
 	startOfYear := time.Date(now.Year(), time.January, 1, 0, 0, 0, 0, now.Location())
-	endOfYear := now
-	endOfYear = time.Date(endOfYear.Year(), endOfYear.Month(), endOfYear.Day(), 23, 59, 59, 0, endOfYear.Location())
+	endOfYear := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, now.Location())
 
 	average, count, err := work.CalculateAverageForRecords(records, startOfYear, endOfYear)
 	if err != nil {
