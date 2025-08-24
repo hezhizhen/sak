@@ -11,7 +11,7 @@ import (
 )
 
 func worktimeCmd() *cobra.Command {
-	var today, thisWeek, thisMonth, lastWeek, lastMonth, thisYear, lastYear bool
+	var period string
 
 	cmd := &cobra.Command{
 		Use:   "worktime",
@@ -19,49 +19,44 @@ func worktimeCmd() *cobra.Command {
 		Long: `Analyze work time data from worktime.csv file in the current directory.
 
 Examples:
-  sak worktime --today        # Show today's work duration
-  sak worktime --this-week    # Show this week's average work duration
-  sak worktime --this-month   # Show this month's average work duration
-  sak worktime --last-week    # Show last week's average work duration
-  sak worktime --last-month   # Show last month's average work duration
-  sak worktime --this-year    # Show this year's average work duration
-  sak worktime --last-year    # Show last year's average work duration
+  sak worktime --period today        # Show today's work duration
+  sak worktime -p this-week          # Show this week's average work duration
+  sak worktime --period this-month   # Show this month's average work duration
+  sak worktime -p last-week          # Show last week's average work duration
+  sak worktime --period last-month   # Show last month's average work duration
+  sak worktime -p this-year          # Show this year's average work duration
+  sak worktime --period last-year    # Show last year's average work duration
 `,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Ensure only one flag is set
-			flags := []bool{today, thisWeek, thisMonth, lastWeek, lastMonth, thisYear, lastYear}
-			flagCount := 0
-			for _, flag := range flags {
-				if flag {
-					flagCount++
+			// Validate period parameter
+			if period == "" {
+				return fmt.Errorf("please specify a period using --period/-p flag")
+			}
+
+			validPeriods := []string{"today", "this-week", "this-month", "last-week", "last-month", "this-year", "last-year"}
+			isValid := false
+			for _, validPeriod := range validPeriods {
+				if period == validPeriod {
+					isValid = true
+					break
 				}
 			}
 
-			if flagCount == 0 {
-				return fmt.Errorf("please specify one of: --today, --this-week, --this-month, --last-week, --last-month, --this-year, --last-year")
+			if !isValid {
+				return fmt.Errorf("invalid period '%s'. Valid options are: %v", period, validPeriods)
 			}
 
-			if flagCount > 1 {
-				return fmt.Errorf("please specify only one flag at a time")
-			}
-
-			return runWorktime(today, thisWeek, thisMonth, lastWeek, lastMonth, thisYear, lastYear)
+			return runWorktime(period)
 		},
 	}
 
-	cmd.Flags().BoolVar(&today, "today", false, "Show today's work duration")
-	cmd.Flags().BoolVar(&thisWeek, "this-week", false, "Show this week's average work duration")
-	cmd.Flags().BoolVar(&thisMonth, "this-month", false, "Show this month's average work duration")
-	cmd.Flags().BoolVar(&lastWeek, "last-week", false, "Show last week's average work duration")
-	cmd.Flags().BoolVar(&lastMonth, "last-month", false, "Show last month's average work duration")
-	cmd.Flags().BoolVar(&thisYear, "this-year", false, "Show this year's average work duration")
-	cmd.Flags().BoolVar(&lastYear, "last-year", false, "Show last year's average work duration")
+	cmd.Flags().StringVarP(&period, "period", "p", "", "Time period to analyze (today, this-week, this-month, last-week, last-month, this-year, last-year)")
 
 	return cmd
 }
 
-func runWorktime(today, thisWeek, thisMonth, lastWeek, lastMonth, thisYear, lastYear bool) error {
+func runWorktime(period string) error {
 	// Check if worktime.csv exists
 	if _, err := os.Stat("worktime.csv"); os.IsNotExist(err) {
 		return fmt.Errorf("worktime.csv not found in current directory")
@@ -75,21 +70,20 @@ func runWorktime(today, thisWeek, thisMonth, lastWeek, lastMonth, thisYear, last
 
 	now := time.Now()
 
-	switch {
-	// TODO: support more cases
-	case today:
+	switch period {
+	case "today":
 		return showTodayDuration(records, now)
-	case thisWeek:
+	case "this-week":
 		return showThisWeekAverage(records, now)
-	case thisMonth:
+	case "this-month":
 		return showThisMonthAverage(records, now)
-	case lastWeek:
+	case "last-week":
 		return showLastWeekAverage(records, now)
-	case lastMonth:
+	case "last-month":
 		return showLastMonthAverage(records, now)
-	case thisYear:
+	case "this-year":
 		return showThisYearAverage(records, now)
-	case lastYear:
+	case "last-year":
 		return showLastYearAverage(records, now)
 	}
 
