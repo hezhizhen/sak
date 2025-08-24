@@ -11,7 +11,7 @@ import (
 )
 
 func worktimeCmd() *cobra.Command {
-	var today, thisWeek, thisMonth, lastWeek, lastMonth bool
+	var today, thisWeek, thisMonth, lastWeek, lastMonth, thisYear, lastYear bool
 
 	cmd := &cobra.Command{
 		Use:   "worktime",
@@ -24,11 +24,13 @@ Examples:
   sak worktime --this-month   # Show this month's average work duration
   sak worktime --last-week    # Show last week's average work duration
   sak worktime --last-month   # Show last month's average work duration
+  sak worktime --this-year    # Show this year's average work duration
+  sak worktime --last-year    # Show last year's average work duration
 `,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Ensure only one flag is set
-			flags := []bool{today, thisWeek, thisMonth, lastWeek, lastMonth}
+			flags := []bool{today, thisWeek, thisMonth, lastWeek, lastMonth, thisYear, lastYear}
 			flagCount := 0
 			for _, flag := range flags {
 				if flag {
@@ -37,14 +39,14 @@ Examples:
 			}
 
 			if flagCount == 0 {
-				return fmt.Errorf("please specify one of: --today, --this-week, --this-month, --last-week, --last-month")
+				return fmt.Errorf("please specify one of: --today, --this-week, --this-month, --last-week, --last-month, --this-year, --last-year")
 			}
 
 			if flagCount > 1 {
 				return fmt.Errorf("please specify only one flag at a time")
 			}
 
-			return runWorktime(today, thisWeek, thisMonth, lastWeek, lastMonth)
+			return runWorktime(today, thisWeek, thisMonth, lastWeek, lastMonth, thisYear, lastYear)
 		},
 	}
 
@@ -53,11 +55,13 @@ Examples:
 	cmd.Flags().BoolVar(&thisMonth, "this-month", false, "Show this month's average work duration")
 	cmd.Flags().BoolVar(&lastWeek, "last-week", false, "Show last week's average work duration")
 	cmd.Flags().BoolVar(&lastMonth, "last-month", false, "Show last month's average work duration")
+	cmd.Flags().BoolVar(&thisYear, "this-year", false, "Show this year's average work duration")
+	cmd.Flags().BoolVar(&lastYear, "last-year", false, "Show last year's average work duration")
 
 	return cmd
 }
 
-func runWorktime(today, thisWeek, thisMonth, lastWeek, lastMonth bool) error {
+func runWorktime(today, thisWeek, thisMonth, lastWeek, lastMonth, thisYear, lastYear bool) error {
 	// Check if worktime.csv exists
 	if _, err := os.Stat("worktime.csv"); os.IsNotExist(err) {
 		return fmt.Errorf("worktime.csv not found in current directory")
@@ -83,6 +87,10 @@ func runWorktime(today, thisWeek, thisMonth, lastWeek, lastMonth bool) error {
 		return showLastWeekAverage(records, now)
 	case lastMonth:
 		return showLastMonthAverage(records, now)
+	case thisYear:
+		return showThisYearAverage(records, now)
+	case lastYear:
+		return showLastYearAverage(records, now)
 	}
 
 	return nil
@@ -171,5 +179,32 @@ func showLastMonthAverage(records []work.Record, now time.Time) error {
 	}
 
 	fmt.Printf("Last month average (%d days): %s\n", count, utils.FormatDuration(average))
+	return nil
+}
+
+func showThisYearAverage(records []work.Record, now time.Time) error {
+	startOfYear := time.Date(now.Year(), time.January, 1, 0, 0, 0, 0, now.Location())
+	endOfYear := now
+	endOfYear = time.Date(endOfYear.Year(), endOfYear.Month(), endOfYear.Day(), 23, 59, 59, 0, endOfYear.Location())
+
+	average, count, err := work.CalculateAverageForRecords(records, startOfYear, endOfYear)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("This year average (%d days): %s\n", count, utils.FormatDuration(average))
+	return nil
+}
+
+func showLastYearAverage(records []work.Record, now time.Time) error {
+	startOfLastYear := time.Date(now.Year()-1, time.January, 1, 0, 0, 0, 0, now.Location())
+	endOfLastYear := time.Date(now.Year()-1, time.December, 31, 23, 59, 59, 0, now.Location())
+
+	average, count, err := work.CalculateAverageForRecords(records, startOfLastYear, endOfLastYear)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Last year average (%d days): %s\n", count, utils.FormatDuration(average))
 	return nil
 }

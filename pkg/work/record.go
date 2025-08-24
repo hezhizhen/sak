@@ -1,3 +1,4 @@
+// Package work provides functionality to manage and parse work records.
 package work
 
 import (
