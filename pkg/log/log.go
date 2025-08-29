@@ -116,6 +116,7 @@ func (l *Logger) Error(format string, args ...interface{}) {
 func (l *Logger) SetLevel(level Level) {
 	l.Lock()
 	defer l.Unlock()
+
 	l.level = level
 }
 
@@ -156,5 +157,6 @@ func Error(format string, args ...interface{}) {
 func SetColors(enabled bool) {
 	defaultLogger.Lock()
 	defer defaultLogger.Unlock()
+
 	defaultLogger.colors = enabled
 }
