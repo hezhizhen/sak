@@ -29,6 +29,10 @@ Example:
 }
 
 func runCompare(filePath string) error {
+	// Check if filePath is absolute
+	if filepath.IsAbs(filePath) {
+		return fmt.Errorf("file path must be relative, but got absolute path: %s", filePath)
+	}
 	// Get current working directory
 	currentDir, err := os.Getwd()
 	if err != nil {
