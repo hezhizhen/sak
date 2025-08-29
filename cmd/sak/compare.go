@@ -170,7 +170,7 @@ func compareDirectories(currentDir, homeDir string) error {
 		if !info.IsDir() {
 			relPath, err := filepath.Rel(currentDir, path)
 			if err != nil {
-				return nil
+				return err
 			}
 			currentFiles[relPath] = true
 		}
@@ -183,13 +183,13 @@ func compareDirectories(currentDir, homeDir string) error {
 	// Walk home directory
 	err = walkWithSymlinks(homeDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return nil // Continue walking even if there's an error
+			return err
 		}
 
 		if !info.IsDir() {
 			relPath, err := filepath.Rel(homeDir, path)
 			if err != nil {
-				return nil
+				return err
 			}
 			homeFiles[relPath] = true
 		}
