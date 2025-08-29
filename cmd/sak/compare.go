@@ -180,6 +180,10 @@ func compareDirectories(currentDir, homeDir string) error {
 	if err != nil {
 		return fmt.Errorf("failed to walk current directory: %v", err)
 	}
+	log.Debug("Current directory: %s", currentDir)
+	for file := range currentFiles {
+		log.Debug("  %s", file)
+	}
 
 	// Walk home directory
 	err = walkWithSymlinks(homeDir, func(path string, info os.FileInfo, err error) error {
@@ -198,6 +202,10 @@ func compareDirectories(currentDir, homeDir string) error {
 	})
 	if err != nil {
 		return fmt.Errorf("failed to walk home directory: %v", err)
+	}
+	log.Debug("Home directory: %s", homeDir)
+	for file := range homeFiles {
+		log.Debug("  %s", file)
 	}
 
 	// Find common files
