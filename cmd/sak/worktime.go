@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/hezhizhen/sak/pkg/log"
 	"github.com/hezhizhen/sak/pkg/utils"
 	"github.com/hezhizhen/sak/pkg/work"
 	"github.com/spf13/cobra"
@@ -100,7 +101,7 @@ func showTodayDuration(records []work.Record, now time.Time) error {
 
 		// Compare date components directly
 		if recordYear == nowYear && recordMonth == nowMonth && recordDay == nowDay {
-			fmt.Printf("%s: %s\n", now.Format(time.DateOnly), utils.FormatDuration(record.Duration))
+			log.Info("%s: %s", now.Format(time.DateOnly), utils.FormatDuration(record.Duration))
 			return nil
 		}
 	}
@@ -122,7 +123,7 @@ func showThisWeekAverage(records []work.Record, now time.Time) error {
 		return err
 	}
 
-	fmt.Printf("This week average (%d days): %s\n", count, utils.FormatDuration(average))
+	log.Info("This week average (%d days): %s", count, utils.FormatDuration(average))
 	return nil
 }
 
@@ -136,7 +137,7 @@ func showThisMonthAverage(records []work.Record, now time.Time) error {
 		return err
 	}
 
-	fmt.Printf("This month average (%d days): %s\n", count, utils.FormatDuration(average))
+	log.Info("This month average (%d days): %s", count, utils.FormatDuration(average))
 	return nil
 }
 
@@ -155,7 +156,7 @@ func showLastWeekAverage(records []work.Record, now time.Time) error {
 		return err
 	}
 
-	fmt.Printf("Last week average (%d days): %s\n", count, utils.FormatDuration(average))
+	log.Info("Last week average (%d days): %s", count, utils.FormatDuration(average))
 	return nil
 }
 
@@ -172,7 +173,7 @@ func showLastMonthAverage(records []work.Record, now time.Time) error {
 		return err
 	}
 
-	fmt.Printf("Last month average (%d days): %s\n", count, utils.FormatDuration(average))
+	log.Info("Last month average (%d days): %s", count, utils.FormatDuration(average))
 	return nil
 }
 
@@ -185,7 +186,7 @@ func showThisYearAverage(records []work.Record, now time.Time) error {
 		return err
 	}
 
-	fmt.Printf("This year average (%d days): %s\n", count, utils.FormatDuration(average))
+	log.Info("This year average (%d days): %s", count, utils.FormatDuration(average))
 	return nil
 }
 
@@ -198,6 +199,6 @@ func showLastYearAverage(records []work.Record, now time.Time) error {
 		return err
 	}
 
-	fmt.Printf("Last year average (%d days): %s\n", count, utils.FormatDuration(average))
+	log.Info("Last year average (%d days): %s", count, utils.FormatDuration(average))
 	return nil
 }
