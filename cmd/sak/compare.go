@@ -237,15 +237,10 @@ func compareDirectories(currentDir, homeDir string) error {
 
 		fmt.Printf("\n[%d/%d] Comparing: %s\n", i+1, len(commonFiles), file)
 
-		cmd := exec.Command("code", "--diff", currentFile, homeFile)
-		if err := cmd.Start(); err != nil {
-			fmt.Printf("Failed to open diff for %s: %v\n", file, err)
+		cmd := exec.Command("code", "--wait", "--diff", currentFile, homeFile)
+		if err := cmd.Run(); err != nil {
+			fmt.Printf("Failed to run diff for %s: %v\n", file, err)
 			continue
-		}
-
-		if i < len(commonFiles)-1 {
-			fmt.Print("Press Enter to continue to next file...")
-			reader.ReadString('\n')
 		}
 	}
 
