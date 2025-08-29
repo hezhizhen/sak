@@ -57,10 +57,11 @@ var levelColors = map[Level]string{
 
 // Logger represents a logger instance.
 type Logger struct {
+	sync.Mutex
+
 	level  Level
 	output io.Writer
 	colors bool
-	mutex  sync.Mutex
 }
 
 // NewLogger creates a new logger instance.
@@ -78,8 +79,8 @@ func (l *Logger) log(level Level, format string, args ...interface{}) {
 		return
 	}
 
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
+	l.Lock()
+	defer l.Unlock()
 
 	message := fmt.Sprintf(format, args...)
 
@@ -113,8 +114,8 @@ func (l *Logger) Error(format string, args ...interface{}) {
 
 // SetLevel sets the logging level.
 func (l *Logger) SetLevel(level Level) {
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
+	l.Lock()
+	defer l.Unlock()
 	l.level = level
 }
 
@@ -153,7 +154,7 @@ func Error(format string, args ...interface{}) {
 
 // SetColors enables or disables colored output.
 func SetColors(enabled bool) {
-	defaultLogger.mutex.Lock()
-	defer defaultLogger.mutex.Unlock()
+	defaultLogger.Lock()
+	defer defaultLogger.Unlock()
 	defaultLogger.colors = enabled
 }
