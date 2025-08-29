@@ -18,6 +18,7 @@ func main() {
 
 	cmd.AddCommand(versionCmd())
 	cmd.AddCommand(worktimeCmd())
+	cmd.AddCommand(compareCmd())
 
 	utils.CheckError(cmd.Execute())
 }
