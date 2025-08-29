@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hezhizhen/sak/pkg/log"
 	"github.com/hezhizhen/sak/pkg/utils"
 )
 
@@ -179,7 +180,7 @@ func CalculateAverageForRecords(records []Record, start, end time.Time) (time.Du
 
 		if (recordDate.Equal(start) || recordDate.After(start)) && (recordDate.Equal(end) || recordDate.Before(end)) {
 			// Display each selected day's work time
-			fmt.Printf("%2d %s: %s\n", count+1, record.Date.Format("2006-01-02"), utils.FormatDuration(record.Duration))
+			log.Debug("%2d %s: %s", count+1, record.Date.Format("2006-01-02"), utils.FormatDuration(record.Duration))
 
 			// For average calculation: use 9h for leave days, actual duration for normal days
 			var durationForAverage time.Duration

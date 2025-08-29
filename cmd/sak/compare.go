@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/hezhizhen/sak/pkg/log"
 	"github.com/spf13/cobra"
 )
 
@@ -88,9 +89,9 @@ func compareFiles(currentFile, homeFile string) error {
 		return fmt.Errorf("failed to execute VS Code diff: %v", err)
 	}
 
-	fmt.Printf("Opening diff between:\n")
-	fmt.Printf("  Current: %s\n", currentFile)
-	fmt.Printf("  Home:    %s\n", homeFile)
+	log.Info("Opening diff between:")
+	log.Info("  Current: %s", currentFile)
+	log.Info("  Home:    %s", homeFile)
 
 	return nil
 }
@@ -208,13 +209,13 @@ func compareDirectories(currentDir, homeDir string) error {
 	}
 
 	if len(commonFiles) == 0 {
-		fmt.Println("No common files found between the directories.")
+		log.Info("No common files found between the directories.")
 		return nil
 	}
 
-	fmt.Printf("\nFound %d common files to compare:\n", len(commonFiles))
+	log.Info("Found %d common files to compare:", len(commonFiles))
 	for _, file := range commonFiles {
-		fmt.Printf("  %s\n", file)
+		log.Debug("  %s", file)
 	}
 
 	fmt.Print("\nDo you want to compare all files? (y/n): ")
@@ -226,7 +227,7 @@ func compareDirectories(currentDir, homeDir string) error {
 
 	response = strings.TrimSpace(strings.ToLower(response))
 	if response != "y" && response != "yes" {
-		fmt.Println("Comparison cancelled.")
+		log.Info("Comparison cancelled.")
 		return nil
 	}
 
@@ -235,15 +236,15 @@ func compareDirectories(currentDir, homeDir string) error {
 		currentFile := filepath.Join(currentDir, file)
 		homeFile := filepath.Join(homeDir, file)
 
-		fmt.Printf("\n[%d/%d] Comparing: %s\n", i+1, len(commonFiles), file)
+		log.Info("[%d/%d] Comparing: %s", i+1, len(commonFiles), file)
 
 		cmd := exec.Command("code", "--wait", "--diff", currentFile, homeFile)
 		if err := cmd.Run(); err != nil {
-			fmt.Printf("Failed to run diff for %s: %v\n", file, err)
+			log.Error("Failed to run diff for %s: %v", file, err)
 			continue
 		}
 	}
 
-	fmt.Printf("\nCompleted comparing %d files.\n", len(commonFiles))
+	log.Info("Completed comparing %d files.", len(commonFiles))
 	return nil
 }
