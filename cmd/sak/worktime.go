@@ -183,7 +183,7 @@ func calculateThisMonthAverage(records []work.Record, now time.Time) WorktimeSum
 
 // calculateThisQuarterAverage 计算本季度平均工作时长
 func calculateThisQuarterAverage(records []work.Record, now time.Time) WorktimeSummary {
-	startOfQuarter, endOfQuarter := getQuarterRange(now.Year(), getQuarter(now))
+	startOfQuarter, endOfQuarter := getQuarterRange(now.Year(), getQuarter(now), now.Location())
 	endOfQuarter = minTime(endOfQuarter, now)
 	endOfQuarter = time.Date(endOfQuarter.Year(), endOfQuarter.Month(), endOfQuarter.Day(), 23, 59, 59, 0, endOfQuarter.Location())
 
@@ -211,7 +211,7 @@ func calculateLastQuarterAverage(records []work.Record, now time.Time) WorktimeS
 		year = now.Year()
 	}
 
-	startOfLastQuarter, endOfLastQuarter := getQuarterRange(year, lastQuarter)
+	startOfLastQuarter, endOfLastQuarter := getQuarterRange(year, lastQuarter, now.Location())
 
 	average, count, err := work.CalculateAverageForRecords(records, startOfLastQuarter, endOfLastQuarter)
 	return WorktimeSummary{
@@ -297,7 +297,7 @@ func getQuarter(t time.Time) int {
 }
 
 // getQuarterRange 获取指定年份和季度的起止时间
-func getQuarterRange(year, quarter int) (time.Time, time.Time) {
+func getQuarterRange(year, quarter int, loc *time.Location) (time.Time, time.Time) {
 	var startMonth, endMonth time.Month
 	switch quarter {
 	case 1:
@@ -310,8 +310,8 @@ func getQuarterRange(year, quarter int) (time.Time, time.Time) {
 		startMonth, endMonth = time.October, time.December
 	}
 
-	start := time.Date(year, startMonth, 1, 0, 0, 0, 0, time.Local)
-	end := time.Date(year, endMonth+1, 1, 0, 0, 0, 0, time.Local).Add(-time.Second)
+	start := time.Date(year, startMonth, 1, 0, 0, 0, 0, loc)
+	end := time.Date(year, endMonth+1, 1, 0, 0, 0, 0, loc).Add(-time.Second)
 
 	return start, end
 }
@@ -344,11 +344,7 @@ func formatWorktimeTable(comparisons []WorktimeComparison, includeComparison boo
 		if current.Error != nil {
 			currentStr = "-"
 		} else {
-			if current.Period == "day" {
-				currentStr = utils.FormatDuration(current.Average)
-			} else {
-				currentStr = utils.FormatDuration(current.Average)
-			}
+			currentStr = utils.FormatDuration(current.Average)
 		}
 
 		if includeComparison {
