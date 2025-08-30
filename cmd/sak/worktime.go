@@ -357,12 +357,12 @@ func formatWorktimeTable(comparisons []WorktimeComparison, includeComparison boo
 			}
 
 			result.WriteString(fmt.Sprintf("%-8s %-12s %s\n",
-				strings.Title(current.Label),
+				current.Label,
 				currentStr,
 				previousStr))
 		} else {
 			result.WriteString(fmt.Sprintf("%-8s %s\n",
-				strings.Title(current.Label),
+				current.Label,
 				currentStr))
 		}
 	}
