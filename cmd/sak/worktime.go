@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hezhizhen/sak/pkg/log"
 	"github.com/hezhizhen/sak/pkg/utils"
 	"github.com/hezhizhen/sak/pkg/work"
 	"github.com/spf13/cobra"
@@ -63,22 +64,21 @@ func runWorktime(includeComparison bool) error {
 	// Parse CSV file
 	records, err := work.ParseRecordsFromFile(worktimeFile)
 	if err != nil {
-		return fmt.Errorf("failed to parse worktime.csv: %v", err)
+		return fmt.Errorf("failed to parse %q: %v", worktimeFile, err)
 	}
 
 	now := time.Now()
+	log.Info("Today: %s", now.Format(time.DateOnly))
 
 	// Calculate all current period statistics
 	var comparisons []WorktimeComparison
 
-	// Today
-	currentDay := calculateTodayDuration(records, now)
+	// Day: today vs Yesterday
+	currentDay := calculateDayDuration(records, now)
 	dayComparison := WorktimeComparison{Current: currentDay}
 	if includeComparison {
-		// Yesterday is not meaningful for comparison, set error to show "-"
-		dayComparison.Previous = WorktimeSummary{
-			Error: fmt.Errorf("not applicable"),
-		}
+		yesterday := now.AddDate(0, 0, -1)
+		dayComparison.Previous = calculateDayDuration(records, yesterday)
 	}
 	comparisons = append(comparisons, dayComparison)
 
@@ -121,17 +121,17 @@ func runWorktime(includeComparison bool) error {
 	return nil
 }
 
-// calculateTodayDuration 计算今天的工作时长
-func calculateTodayDuration(records []work.Record, now time.Time) WorktimeSummary {
-	nowYear, nowMonth, nowDay := now.Date()
+// calculateDayDuration 计算指定日期的工作时长
+func calculateDayDuration(records []work.Record, targetDate time.Time) WorktimeSummary {
+	targetYear, targetMonth, targetDay := targetDate.Date()
 
 	for _, record := range records {
 		recordYear, recordMonth, recordDay := record.Date.Date()
 
-		if recordYear == nowYear && recordMonth == nowMonth && recordDay == nowDay {
+		if recordYear == targetYear && recordMonth == targetMonth && recordDay == targetDay {
 			return WorktimeSummary{
 				Period:  "day",
-				Label:   "Today",
+				Label:   "Day",
 				Average: record.Duration,
 				Count:   1,
 				Error:   nil,
@@ -141,8 +141,8 @@ func calculateTodayDuration(records []work.Record, now time.Time) WorktimeSummar
 
 	return WorktimeSummary{
 		Period: "day",
-		Label:  "Today",
-		Error:  fmt.Errorf("no work time data found for today"),
+		Label:  "Day",
+		Error:  fmt.Errorf("no work time data found for date %s", targetDate.Format(time.DateOnly)),
 	}
 }
 
@@ -342,6 +342,7 @@ func formatWorktimeTable(comparisons []WorktimeComparison, includeComparison boo
 		// Format current period duration
 		var currentStr string
 		if current.Error != nil {
+			log.Error("failed to format current period duration: %v", current.Error)
 			currentStr = "-"
 		} else {
 			currentStr = utils.FormatDuration(current.Average)
@@ -351,6 +352,7 @@ func formatWorktimeTable(comparisons []WorktimeComparison, includeComparison boo
 			// Format previous period duration
 			var previousStr string
 			if comp.Previous.Error != nil {
+				log.Error("failed to format previous period duration: %v", comp.Previous.Error)
 				previousStr = "-"
 			} else {
 				previousStr = utils.FormatDuration(comp.Previous.Average)
