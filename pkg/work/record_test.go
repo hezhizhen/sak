@@ -19,13 +19,13 @@ func Test_parseDate(t *testing.T) {
 		{
 			name:    "with workday",
 			args:    args{dateStr: "2025-07-16 Wednesday"},
-			want:    time.Date(2025, 7, 16, 0, 0, 0, 0, time.UTC),
+			want:    time.Date(2025, 7, 16, 0, 0, 0, 0, time.Local),
 			wantErr: false,
 		},
 		{
 			name:    "without workday",
 			args:    args{dateStr: "2025-07-16"},
-			want:    time.Date(2025, 7, 16, 0, 0, 0, 0, time.UTC),
+			want:    time.Date(2025, 7, 16, 0, 0, 0, 0, time.Local),
 			wantErr: false,
 		},
 	}
@@ -150,9 +150,9 @@ func Test_parseSingleRecord(t *testing.T) {
 				endStr:   "19:41:43",
 			},
 			want: Record{
-				Date:     time.Date(2025, 8, 15, 0, 0, 0, 0, time.UTC),
-				Start:    time.Date(2025, 8, 15, 9, 41, 42, 0, time.UTC),
-				End:      time.Date(2025, 8, 15, 19, 41, 43, 0, time.UTC),
+				Date:     time.Date(2025, 8, 15, 0, 0, 0, 0, time.Local),
+				Start:    time.Date(2025, 8, 15, 9, 41, 42, 0, time.Local),
+				End:      time.Date(2025, 8, 15, 19, 41, 43, 0, time.Local),
 				Duration: 10*time.Hour + 1*time.Second,
 				Normal:   true,
 			},
@@ -166,9 +166,9 @@ func Test_parseSingleRecord(t *testing.T) {
 				endStr:   "20:35:00",
 			},
 			want: Record{
-				Date:     time.Date(2025, 8, 15, 0, 0, 0, 0, time.UTC),
-				Start:    time.Date(2025, 8, 15, 14, 30, 0, 0, time.UTC),
-				End:      time.Date(2025, 8, 15, 20, 35, 0, 0, time.UTC),
+				Date:     time.Date(2025, 8, 15, 0, 0, 0, 0, time.Local),
+				Start:    time.Date(2025, 8, 15, 14, 30, 0, 0, time.Local),
+				End:      time.Date(2025, 8, 15, 20, 35, 0, 0, time.Local),
 				Duration: 6*time.Hour + 5*time.Minute,
 				Normal:   false, // Leave day
 			},
