@@ -90,7 +90,7 @@ func parseSingleRecord(dateStr, startStr, endStr string) (Record, error) {
 		return Record{}, fmt.Errorf("invalid date format: %s", dateStr)
 	}
 
-	date, err := time.ParseInLocation("2006-01-02", dateParts[0], time.Now().Location())
+	date, err := time.ParseInLocation("2006-01-02", dateParts[0], time.Local)
 	if err != nil {
 		return Record{}, fmt.Errorf("failed to parse date %s: %v", dateParts[0], err)
 	}
@@ -137,7 +137,7 @@ func parseDate(dateStr string) (time.Time, error) {
 		return time.Time{}, fmt.Errorf("invalid date format: %s", dateStr)
 	}
 
-	date, err := time.ParseInLocation("2006-01-02", dateParts[0], time.Now().Location())
+	date, err := time.ParseInLocation("2006-01-02", dateParts[0], time.Local)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("failed to parse date %s: %v", dateParts[0], err)
 	}
