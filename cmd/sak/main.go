@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/hezhizhen/sak/pkg/log"
+	"github.com/hezhizhen/sak/internal/log"
 	"github.com/spf13/cobra"
 )
 

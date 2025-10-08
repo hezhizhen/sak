@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/hezhizhen/sak/pkg/version"
+	"github.com/hezhizhen/sak/internal/version"
 	"github.com/spf13/cobra"
 )
 

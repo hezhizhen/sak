@@ -8,12 +8,12 @@ GIT_DIRTY   = $(shell test -n "`git status --porcelain`" && echo "dirty" || echo
 BUILD_DATE  = $(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
 GO_VERSION  = $(shell go env GOVERSION)
 LDFLAGS = -w
-LDFLAGS += -X '$(PROJECT_PKG)/pkg/version.GitCommit=$(GIT_COMMIT)'
-LDFLAGS += -X '$(PROJECT_PKG)/pkg/version.GitBranch=$(GIT_BRANCH)'
-LDFLAGS += -X '$(PROJECT_PKG)/pkg/version.GitTag=$(GIT_TAG)'
-LDFLAGS += -X '$(PROJECT_PKG)/pkg/version.GitTreeState=$(GIT_DIRTY)'
-LDFLAGS += -X '$(PROJECT_PKG)/pkg/version.BuildDate=$(BUILD_DATE)'
-LDFLAGS += -X '$(PROJECT_PKG)/pkg/version.GoVersion=$(GO_VERSION)'
+LDFLAGS += -X '$(PROJECT_PKG)/internal/version.GitCommit=$(GIT_COMMIT)'
+LDFLAGS += -X '$(PROJECT_PKG)/internal/version.GitBranch=$(GIT_BRANCH)'
+LDFLAGS += -X '$(PROJECT_PKG)/internal/version.GitTag=$(GIT_TAG)'
+LDFLAGS += -X '$(PROJECT_PKG)/internal/version.GitTreeState=$(GIT_DIRTY)'
+LDFLAGS += -X '$(PROJECT_PKG)/internal/version.BuildDate=$(BUILD_DATE)'
+LDFLAGS += -X '$(PROJECT_PKG)/internal/version.GoVersion=$(GO_VERSION)'
 
 .PHONY: test
 test:

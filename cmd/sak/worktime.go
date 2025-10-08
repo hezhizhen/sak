@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hezhizhen/sak/pkg/log"
-	"github.com/hezhizhen/sak/pkg/utils"
-	"github.com/hezhizhen/sak/pkg/work"
+	"github.com/hezhizhen/sak/internal/log"
+	"github.com/hezhizhen/sak/internal/utils"
+	"github.com/hezhizhen/sak/internal/work"
 	"github.com/spf13/cobra"
 )
 
