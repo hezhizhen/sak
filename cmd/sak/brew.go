@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/hezhizhen/sak/internal/color"
 	"github.com/hezhizhen/sak/internal/log"
 	"github.com/hezhizhen/sak/internal/types"
 	"github.com/spf13/cobra"
@@ -90,7 +91,7 @@ func runBrewSearch(keyword string) error {
 	}
 
 	if len(formulaResults) > 0 {
-		fmt.Printf("%s==> Formulae%s\n", log.ColorInfo, log.ColorReset)
+		fmt.Println(color.Green("==> Formulae"))
 		printBrewResults(formulaResults)
 	}
 
@@ -98,7 +99,7 @@ func runBrewSearch(keyword string) error {
 		if len(formulaResults) > 0 {
 			fmt.Println()
 		}
-		fmt.Printf("%s==> Casks%s\n", log.ColorBlue, log.ColorReset)
+		fmt.Println(color.Blue("==> Casks"))
 		printBrewResults(caskResults)
 	}
 
@@ -106,7 +107,7 @@ func runBrewSearch(keyword string) error {
 		if len(formulaResults) > 0 || len(caskResults) > 0 {
 			fmt.Println()
 		}
-		fmt.Printf("%s==> Unknown%s\n", log.ColorDebug, log.ColorReset)
+		fmt.Println(color.Gray("==> Unknown"))
 		printBrewResults(unknownResults)
 	}
 
@@ -131,10 +132,10 @@ func printBrewResults(results []types.PackageInfo) {
 		if r.Installed {
 			marker = "\u2713 "
 		}
-		fmt.Printf("%s%-*s  %s%s%s%*s  %s\n",
+		fmt.Printf("%s%-*s  %s%*s  %s\n",
 			marker,
 			maxNameLen, r.Name,
-			log.ColorWarn, r.Version, log.ColorReset,
+			color.Yellow(r.Version),
 			padding, "",
 			r.URL)
 	}

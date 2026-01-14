@@ -6,6 +6,8 @@ import (
 	"io"
 	"os"
 	"sync"
+
+	"github.com/hezhizhen/sak/internal/color"
 )
 
 // Level represents the logging level.
@@ -38,22 +40,12 @@ func (l Level) String() string {
 	}
 }
 
-// Color codes for different log levels
-const (
-	ColorReset = "\033[0m"
-	ColorDebug = "\033[90m" // Gray
-	ColorInfo  = "\033[32m" // Green
-	ColorWarn  = "\033[33m" // Yellow
-	ColorError = "\033[31m" // Red
-	ColorBlue  = "\033[34m" // Blue
-)
-
-// levelColors maps log levels to their corresponding colors
-var levelColors = map[Level]string{
-	DEBUG: ColorDebug,
-	INFO:  ColorInfo,
-	WARN:  ColorWarn,
-	ERROR: ColorError,
+// levelColorFuncs maps log levels to their corresponding color functions
+var levelColorFuncs = map[Level]func(a ...interface{}) string{
+	DEBUG: color.Gray,
+	INFO:  color.Green,
+	WARN:  color.Yellow,
+	ERROR: color.Red,
 }
 
 // Logger represents a logger instance.
@@ -86,8 +78,8 @@ func (l *Logger) log(level Level, format string, args ...interface{}) {
 	message := fmt.Sprintf(format, args...)
 
 	if l.colors {
-		color := levelColors[level]
-		fmt.Fprintf(l.output, "%s[%s]%s %s\n", color, level.String(), ColorReset, message)
+		colorFunc := levelColorFuncs[level]
+		fmt.Fprintf(l.output, "%s %s\n", colorFunc("["+level.String()+"]"), message)
 	} else {
 		fmt.Fprintf(l.output, "[%s] %s\n", level.String(), message)
 	}
@@ -160,4 +152,9 @@ func SetColors(enabled bool) {
 	defer defaultLogger.Unlock()
 
 	defaultLogger.colors = enabled
+	if enabled {
+		color.Enable()
+	} else {
+		color.Disable()
+	}
 }
