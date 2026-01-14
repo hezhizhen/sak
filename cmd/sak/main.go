@@ -29,6 +29,7 @@ func main() {
 	cmd.AddCommand(versionCmd())
 	cmd.AddCommand(worktimeCmd())
 	cmd.AddCommand(compareCmd())
+	cmd.AddCommand(brewCmd())
 
 	if err := cmd.Execute(); err != nil {
 		log.Error("%v", err)

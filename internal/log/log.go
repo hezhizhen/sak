@@ -45,6 +45,7 @@ const (
 	ColorInfo  = "\033[32m" // Green
 	ColorWarn  = "\033[33m" // Yellow
 	ColorError = "\033[31m" // Red
+	ColorBlue  = "\033[34m" // Blue
 )
 
 // levelColors maps log levels to their corresponding colors
