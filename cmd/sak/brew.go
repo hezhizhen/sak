@@ -9,17 +9,9 @@ import (
 	"sync"
 
 	"github.com/hezhizhen/sak/internal/log"
+	"github.com/hezhizhen/sak/internal/types"
 	"github.com/spf13/cobra"
 )
-
-type packageInfo struct {
-	Name      string
-	Version   string
-	URL       string
-	Type      string // "formula", "cask", or "unknown"
-	Installed bool
-	Failed    bool // true if failed to get package info
-}
 
 func brewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -59,7 +51,7 @@ func runBrewSearch(keyword string) error {
 
 	log.Debug("Found %d packages", len(packages))
 
-	var results []packageInfo
+	var results []types.PackageInfo
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
@@ -85,7 +77,7 @@ func runBrewSearch(keyword string) error {
 		return results[i].Name < results[j].Name
 	})
 
-	var formulaResults, caskResults, unknownResults []packageInfo
+	var formulaResults, caskResults, unknownResults []types.PackageInfo
 	for _, r := range results {
 		switch r.Type {
 		case "formula":
@@ -121,7 +113,7 @@ func runBrewSearch(keyword string) error {
 	return nil
 }
 
-func printBrewResults(results []packageInfo) {
+func printBrewResults(results []types.PackageInfo) {
 	maxNameLen := 0
 	maxVersionLen := 0
 	for _, r := range results {
@@ -148,14 +140,14 @@ func printBrewResults(results []packageInfo) {
 	}
 }
 
-func getPackageInfo(name string) packageInfo {
+func getPackageInfo(name string) types.PackageInfo {
 	log.Debug("Getting info for: %s", name)
 
 	cmd := exec.Command("brew", "info", "--json=v2", name)
 	output, err := cmd.Output()
 	if err != nil {
 		log.Debug("brew info failed for %s: %v", name, err)
-		return packageInfo{Name: name, Version: "unknown", Type: "unknown", Failed: true}
+		return types.PackageInfo{Name: name, Version: "unknown", Type: "unknown", Failed: true}
 	}
 
 	var data struct {
@@ -177,11 +169,11 @@ func getPackageInfo(name string) packageInfo {
 
 	if err := json.Unmarshal(output, &data); err != nil {
 		log.Debug("parse JSON failed for %s: %v", name, err)
-		return packageInfo{Name: name, Version: "unknown", Type: "unknown", Failed: true}
+		return types.PackageInfo{Name: name, Version: "unknown", Type: "unknown", Failed: true}
 	}
 
 	if len(data.Formulae) > 0 && data.Formulae[0].Versions.Stable != "" {
-		return packageInfo{
+		return types.PackageInfo{
 			Name:      name,
 			Version:   data.Formulae[0].Versions.Stable,
 			URL:       data.Formulae[0].Homepage,
@@ -190,7 +182,7 @@ func getPackageInfo(name string) packageInfo {
 		}
 	}
 	if len(data.Casks) > 0 && data.Casks[0].Version != "" {
-		return packageInfo{
+		return types.PackageInfo{
 			Name:      name,
 			Version:   data.Casks[0].Version,
 			URL:       data.Casks[0].Homepage,
@@ -200,5 +192,5 @@ func getPackageInfo(name string) packageInfo {
 	}
 
 	log.Debug("no version info found for %s", name)
-	return packageInfo{Name: name, Version: "unknown", Type: "unknown", Failed: true}
+	return types.PackageInfo{Name: name, Version: "unknown", Type: "unknown", Failed: true}
 }

@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/hezhizhen/sak/internal/types"
 )
 
 func Test_hasLeave(t *testing.T) {
@@ -102,7 +104,7 @@ func Test_parseSingleRecord(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    Record
+		want    types.Record
 		wantErr bool
 	}{
 		{
@@ -112,7 +114,7 @@ func Test_parseSingleRecord(t *testing.T) {
 				startStr: "09:41:42",
 				endStr:   "19:41:43",
 			},
-			want: Record{
+			want: types.Record{
 				Date:     time.Date(2025, 8, 15, 0, 0, 0, 0, time.Local),
 				Start:    time.Date(2025, 8, 15, 9, 41, 42, 0, time.Local),
 				End:      time.Date(2025, 8, 15, 19, 41, 43, 0, time.Local),
@@ -128,7 +130,7 @@ func Test_parseSingleRecord(t *testing.T) {
 				startStr: "14:30:00",
 				endStr:   "20:35:00",
 			},
-			want: Record{
+			want: types.Record{
 				Date:     time.Date(2025, 8, 15, 0, 0, 0, 0, time.Local),
 				Start:    time.Date(2025, 8, 15, 14, 30, 0, 0, time.Local),
 				End:      time.Date(2025, 8, 15, 20, 35, 0, 0, time.Local),
@@ -154,14 +156,14 @@ func Test_parseSingleRecord(t *testing.T) {
 
 func Test_CalculateAverageForRecords(t *testing.T) {
 	// Create test records
-	normalDay := Record{
+	normalDay := types.Record{
 		Date:     time.Date(2023, 7, 31, 0, 0, 0, 0, time.UTC),
 		Start:    time.Date(2023, 7, 31, 10, 0, 0, 0, time.UTC),
 		End:      time.Date(2023, 7, 31, 19, 0, 0, 0, time.UTC),
 		Duration: 9 * time.Hour,
 		Normal:   true,
 	}
-	leaveDay := Record{
+	leaveDay := types.Record{
 		Date:     time.Date(2023, 8, 1, 0, 0, 0, 0, time.UTC),
 		Start:    time.Date(2023, 8, 1, 10, 0, 0, 0, time.UTC),
 		End:      time.Date(2023, 8, 1, 15, 0, 0, 0, time.UTC), // 5 hours actual
@@ -170,7 +172,7 @@ func Test_CalculateAverageForRecords(t *testing.T) {
 	}
 
 	type args struct {
-		records []Record
+		records []types.Record
 		start   time.Time
 		end     time.Time
 	}
@@ -184,7 +186,7 @@ func Test_CalculateAverageForRecords(t *testing.T) {
 		{
 			name: "mixed normal and leave days",
 			args: args{
-				records: []Record{normalDay, leaveDay},
+				records: []types.Record{normalDay, leaveDay},
 				start:   time.Date(2023, 7, 31, 0, 0, 0, 0, time.UTC),
 				end:     time.Date(2023, 8, 1, 0, 0, 0, 0, time.UTC),
 			},
@@ -195,7 +197,7 @@ func Test_CalculateAverageForRecords(t *testing.T) {
 		{
 			name: "only normal days",
 			args: args{
-				records: []Record{normalDay},
+				records: []types.Record{normalDay},
 				start:   time.Date(2023, 7, 31, 0, 0, 0, 0, time.UTC),
 				end:     time.Date(2023, 7, 31, 0, 0, 0, 0, time.UTC),
 			},

@@ -5,12 +5,13 @@ import (
 	"time"
 
 	"github.com/hezhizhen/sak/internal/log"
+	"github.com/hezhizhen/sak/internal/types"
 	"github.com/hezhizhen/sak/internal/utils"
 )
 
 // CalculateAverageForRecords calculates the average work time for the given records.
 // For leave days (Normal = false), it uses 9 hours in the average calculation instead of actual duration.
-func CalculateAverageForRecords(records []Record, start, end time.Time) (time.Duration, int, error) {
+func CalculateAverageForRecords(records []types.Record, start, end time.Time) (time.Duration, int, error) {
 	var totalDuration time.Duration
 	count := 0
 

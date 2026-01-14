@@ -3,6 +3,8 @@ package version
 
 import (
 	"runtime"
+
+	"github.com/hezhizhen/sak/internal/types"
 )
 
 var (
@@ -22,22 +24,9 @@ var (
 	GoVersion = ""
 )
 
-// BuildInfo contains all build-time information
-type BuildInfo struct {
-	Version      string `json:"version"`
-	GitCommit    string `json:"gitCommit"`
-	GitBranch    string `json:"gitBranch,omitempty"`
-	GitTag       string `json:"gitTag,omitempty"`
-	GitTreeState string `json:"gitTreeState"`
-	BuildDate    string `json:"buildDate"`
-	GoVersion    string `json:"goVersion"`
-	GOOS         string `json:"goos"`
-	GOARCH       string `json:"goarch"`
-}
-
 // GetBuildInfo returns comprehensive build and runtime information
-func GetBuildInfo() BuildInfo {
-	return BuildInfo{
+func GetBuildInfo() types.BuildInfo {
+	return types.BuildInfo{
 		Version:      Version,
 		GitCommit:    GitCommit,
 		GitBranch:    GitBranch,

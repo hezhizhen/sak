@@ -3,15 +3,6 @@ package worktime
 
 import "time"
 
-// Record represents a single work record
-type Record struct {
-	Date     time.Time
-	Start    time.Time
-	End      time.Time
-	Duration time.Duration
-	Normal   bool // if it is false, use fixed duration (9h, 10-19) instead
-}
-
 // hasLeave determines if there is leave on a given day based on start and end.
 // leave cases:
 // - start > 12:00

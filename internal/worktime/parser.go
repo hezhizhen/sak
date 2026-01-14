@@ -7,12 +7,14 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/hezhizhen/sak/internal/types"
 )
 
 // ParseRecordsFromFile parses a CSV file containing work records.
 // The CSV file syntax is expected to be:
 // Date,Start,End
-func ParseRecordsFromFile(filename string) ([]Record, error) {
+func ParseRecordsFromFile(filename string) ([]types.Record, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -29,7 +31,7 @@ func ParseRecordsFromFile(filename string) ([]Record, error) {
 		return nil, fmt.Errorf("CSV file must have at least a header and one data row")
 	}
 
-	var records []Record
+	var records []types.Record
 	for i, row := range rows {
 		if i == 0 { // Skip header
 			continue
@@ -51,28 +53,28 @@ func ParseRecordsFromFile(filename string) ([]Record, error) {
 }
 
 // parseSingleRecord parses a single record from the CSV file.
-func parseSingleRecord(dateStr, startStr, endStr string) (Record, error) {
+func parseSingleRecord(dateStr, startStr, endStr string) (types.Record, error) {
 	// Parse date (format: "2025-07-16 Wednesday")
 	dateParts := strings.Fields(dateStr)
 	if len(dateParts) < 1 {
-		return Record{}, fmt.Errorf("invalid date format: %s", dateStr)
+		return types.Record{}, fmt.Errorf("invalid date format: %s", dateStr)
 	}
 
 	date, err := time.ParseInLocation("2006-01-02", dateParts[0], time.Local)
 	if err != nil {
-		return Record{}, fmt.Errorf("failed to parse date %s: %v", dateParts[0], err)
+		return types.Record{}, fmt.Errorf("failed to parse date %s: %v", dateParts[0], err)
 	}
 
 	// Parse start time
 	startTime, err := parseTimeOnDate(date, startStr)
 	if err != nil {
-		return Record{}, fmt.Errorf("failed to parse start time %s: %v", startStr, err)
+		return types.Record{}, fmt.Errorf("failed to parse start time %s: %v", startStr, err)
 	}
 
 	// Parse end time
 	endTime, err := parseTimeOnDate(date, endStr)
 	if err != nil {
-		return Record{}, fmt.Errorf("failed to parse end time %s: %v", endStr, err)
+		return types.Record{}, fmt.Errorf("failed to parse end time %s: %v", endStr, err)
 	}
 
 	// Calculate duration
@@ -86,7 +88,7 @@ func parseSingleRecord(dateStr, startStr, endStr string) (Record, error) {
 	// Determine if this day has leave
 	isLeaveDay := hasLeave(startTime, endTime)
 
-	return Record{
+	return types.Record{
 		Date:     date,
 		Start:    startTime,
 		End:      endTime,
