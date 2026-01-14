@@ -1,5 +1,4 @@
-// Package work provides functionality to manage and parse work records.
-package work
+package worktime
 
 import (
 	"encoding/csv"
@@ -8,24 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/hezhizhen/sak/internal/log"
-	"github.com/hezhizhen/sak/internal/utils"
 )
-
-const (
-	afternoonStartHour = 12
-	earlyEndHour       = 17
-	minWorkHours       = 9
-)
-
-type Record struct {
-	Date     time.Time
-	Start    time.Time
-	End      time.Time
-	Duration time.Duration
-	Normal   bool // if it is false, use fixed duration (9h, 10-19) instead
-}
 
 // ParseRecordsFromFile parses a CSV file containing work records.
 // The CSV file syntax is expected to be:
@@ -66,20 +48,6 @@ func ParseRecordsFromFile(filename string) ([]Record, error) {
 	}
 
 	return records, nil
-}
-
-// hasLeave determines if there is leave on a given day based on start and end.
-// leave cases:
-// - start > 12:00
-// - end < 17:00
-// - duration < 9 hours
-func hasLeave(start, end time.Time) bool {
-	afternoonStart := time.Date(start.Year(), start.Month(), start.Day(), afternoonStartHour, 0, 0, 0, start.Location())
-	earlyEnd := time.Date(end.Year(), end.Month(), end.Day(), earlyEndHour, 0, 0, 0, end.Location())
-
-	return start.After(afternoonStart) ||
-		end.Before(earlyEnd) ||
-		end.Sub(start).Hours() < minWorkHours
 }
 
 // parseSingleRecord parses a single record from the CSV file.
@@ -127,24 +95,6 @@ func parseSingleRecord(dateStr, startStr, endStr string) (Record, error) {
 	}, nil
 }
 
-// parseDate parses a date string to a time.Time.
-// The string can be one of the following formats:
-// - "2006-01-02 Wednesday"
-// - "2006-01-02"
-func parseDate(dateStr string) (time.Time, error) {
-	dateParts := strings.Fields(dateStr)
-	if len(dateParts) < 1 {
-		return time.Time{}, fmt.Errorf("invalid date format: %s", dateStr)
-	}
-
-	date, err := time.ParseInLocation("2006-01-02", dateParts[0], time.Local)
-	if err != nil {
-		return time.Time{}, fmt.Errorf("failed to parse date %s: %v", dateParts[0], err)
-	}
-
-	return date, nil
-}
-
 func parseTimeOnDate(date time.Time, timeStr string) (time.Time, error) {
 	timeParts := strings.Split(timeStr, ":")
 	if len(timeParts) != 3 {
@@ -167,39 +117,4 @@ func parseTimeOnDate(date time.Time, timeStr string) (time.Time, error) {
 	}
 
 	return time.Date(date.Year(), date.Month(), date.Day(), hour, minute, second, 0, date.Location()), nil
-}
-
-// CalculateAverageForRecords calculates the average work time for the given records.
-// For leave days (Normal = false), it uses 9 hours in the average calculation instead of actual duration.
-func CalculateAverageForRecords(records []Record, start, end time.Time) (time.Duration, int, error) {
-	var totalDuration time.Duration
-	count := 0
-
-	for _, record := range records {
-		recordDate := time.Date(record.Date.Year(), record.Date.Month(), record.Date.Day(), 0, 0, 0, 0, record.Date.Location())
-
-		if (recordDate.Equal(start) || recordDate.After(start)) && (recordDate.Equal(end) || recordDate.Before(end)) {
-			// Display each selected day's work time
-			log.Debug("%2d %s: %s", count+1, record.Date.Format("2006-01-02"), utils.FormatDuration(record.Duration))
-
-			// For average calculation: use 9h for leave days, actual duration for normal days
-			var durationForAverage time.Duration
-			if record.Normal {
-				durationForAverage = record.Duration
-			} else {
-				// Use 9 hours for leave days in average calculation
-				durationForAverage = minWorkHours * time.Hour
-			}
-
-			totalDuration += durationForAverage
-			count++
-		}
-	}
-
-	if count == 0 {
-		return 0, 0, fmt.Errorf("no work time data found for the specified period")
-	}
-
-	average := totalDuration / time.Duration(count)
-	return average, count, nil
 }
