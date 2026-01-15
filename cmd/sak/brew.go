@@ -21,7 +21,19 @@ const (
 
 func brewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "brew <keyword>",
+		Use:   "brew",
+		Short: "Homebrew package management utilities",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cmd.Help()
+		},
+	}
+	cmd.AddCommand(brewSearchCmd())
+	return cmd
+}
+
+func brewSearchCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "search <keyword>",
 		Short: "Search Homebrew packages and display their info",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
