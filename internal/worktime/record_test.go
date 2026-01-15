@@ -222,3 +222,76 @@ func Test_CalculateAverageForRecords(t *testing.T) {
 		})
 	}
 }
+
+func Test_parseTimeOnDate(t *testing.T) {
+	date := time.Date(2025, 8, 15, 0, 0, 0, 0, time.Local)
+
+	type args struct {
+		date    time.Time
+		timeStr string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    time.Time
+		wantErr bool
+	}{
+		{
+			name: "valid time string",
+			args: args{
+				date:    date,
+				timeStr: "09:30:45",
+			},
+			want:    time.Date(2025, 8, 15, 9, 30, 45, 0, time.Local),
+			wantErr: false,
+		},
+		{
+			name: "invalid format - missing parts",
+			args: args{
+				date:    date,
+				timeStr: "09:30",
+			},
+			want:    time.Time{},
+			wantErr: true,
+		},
+		{
+			name: "invalid hour",
+			args: args{
+				date:    date,
+				timeStr: "ab:30:45",
+			},
+			want:    time.Time{},
+			wantErr: true,
+		},
+		{
+			name: "invalid minute",
+			args: args{
+				date:    date,
+				timeStr: "09:xx:45",
+			},
+			want:    time.Time{},
+			wantErr: true,
+		},
+		{
+			name: "invalid second",
+			args: args{
+				date:    date,
+				timeStr: "09:30:yy",
+			},
+			want:    time.Time{},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseTimeOnDate(tt.args.date, tt.args.timeStr)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseTimeOnDate() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !got.Equal(tt.want) {
+				t.Errorf("parseTimeOnDate() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
