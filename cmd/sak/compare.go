@@ -55,13 +55,19 @@ func runCompare(targetPath string) error {
 	homePath := filepath.Join(homeDir, targetPath)
 
 	currentInfo, err := os.Stat(currentPath)
-	homeInfo, homeErr := os.Stat(homePath)
-
-	if os.IsNotExist(err) {
-		return fmt.Errorf("path does not exist in current directory: %s", currentPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("path does not exist in current directory: %s", currentPath)
+		}
+		return fmt.Errorf("failed to stat current path: %v", err)
 	}
-	if os.IsNotExist(homeErr) {
-		return fmt.Errorf("path does not exist in home directory: %s", homePath)
+
+	homeInfo, err := os.Stat(homePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("path does not exist in home directory: %s", homePath)
+		}
+		return fmt.Errorf("failed to stat home path: %v", err)
 	}
 
 	// Check if code command is available
@@ -88,6 +94,10 @@ func compareFiles(currentFile, homeFile string) error {
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("failed to execute VS Code diff: %v", err)
 	}
+
+	// Note: We intentionally don't wait for VS Code to close.
+	// VS Code is a GUI application that runs independently.
+	// The process will be reaped by the OS when it terminates.
 
 	log.Info("Opening diff between:")
 	log.Info("  Current: %s", currentFile)
@@ -157,26 +167,51 @@ func walkWithSymlinks(root string, walkFn filepath.WalkFunc) error {
 	})
 }
 
-func compareDirectories(currentDir, homeDir string) error {
-	// Collect all files from both directories
-	currentFiles := make(map[string]bool)
-	homeFiles := make(map[string]bool)
-
-	// Walk current directory
-	err := walkWithSymlinks(currentDir, func(path string, info os.FileInfo, err error) error {
+// collectFiles walks a directory and returns a map of relative file paths.
+func collectFiles(dir string) (map[string]bool, error) {
+	files := make(map[string]bool)
+	err := walkWithSymlinks(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-
 		if !info.IsDir() {
-			relPath, err := filepath.Rel(currentDir, path)
+			relPath, err := filepath.Rel(dir, path)
 			if err != nil {
 				return err
 			}
-			currentFiles[relPath] = true
+			files[relPath] = true
 		}
 		return nil
 	})
+	return files, err
+}
+
+// findCommonFiles returns files that exist in both maps.
+func findCommonFiles(a, b map[string]bool) []string {
+	var common []string
+	for file := range a {
+		if b[file] {
+			common = append(common, file)
+		}
+	}
+	return common
+}
+
+// promptUserConfirmation asks user for yes/no confirmation.
+func promptUserConfirmation(prompt string) (bool, error) {
+	fmt.Print(prompt)
+	reader := bufio.NewReader(os.Stdin)
+	response, err := reader.ReadString('\n')
+	if err != nil {
+		return false, fmt.Errorf("failed to read input: %v", err)
+	}
+	response = strings.TrimSpace(strings.ToLower(response))
+	return response == "y" || response == "yes", nil
+}
+
+func compareDirectories(currentDir, homeDir string) error {
+	// Collect files from both directories
+	currentFiles, err := collectFiles(currentDir)
 	if err != nil {
 		return fmt.Errorf("failed to walk current directory: %v", err)
 	}
@@ -185,21 +220,7 @@ func compareDirectories(currentDir, homeDir string) error {
 		log.Debug("  %s", file)
 	}
 
-	// Walk home directory
-	err = walkWithSymlinks(homeDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if !info.IsDir() {
-			relPath, err := filepath.Rel(homeDir, path)
-			if err != nil {
-				return err
-			}
-			homeFiles[relPath] = true
-		}
-		return nil
-	})
+	homeFiles, err := collectFiles(homeDir)
 	if err != nil {
 		return fmt.Errorf("failed to walk home directory: %v", err)
 	}
@@ -209,13 +230,7 @@ func compareDirectories(currentDir, homeDir string) error {
 	}
 
 	// Find common files
-	var commonFiles []string
-	for file := range currentFiles {
-		if homeFiles[file] {
-			commonFiles = append(commonFiles, file)
-		}
-	}
-
+	commonFiles := findCommonFiles(currentFiles, homeFiles)
 	if len(commonFiles) == 0 {
 		log.Info("No common files found between the directories.")
 		return nil
@@ -226,15 +241,12 @@ func compareDirectories(currentDir, homeDir string) error {
 		log.Debug("  %s", file)
 	}
 
-	fmt.Print("\nDo you want to compare all files? (y/n): ")
-	reader := bufio.NewReader(os.Stdin)
-	response, err := reader.ReadString('\n')
+	// Ask for user confirmation
+	confirmed, err := promptUserConfirmation("\nDo you want to compare all files? (y/n): ")
 	if err != nil {
-		return fmt.Errorf("failed to read input: %v", err)
+		return err
 	}
-
-	response = strings.TrimSpace(strings.ToLower(response))
-	if response != "y" && response != "yes" {
+	if !confirmed {
 		log.Info("Comparison cancelled.")
 		return nil
 	}
@@ -248,6 +260,7 @@ func compareDirectories(currentDir, homeDir string) error {
 
 		cmd := exec.Command("code", "--wait", "--diff", currentFile, homeFile)
 		if err := cmd.Run(); err != nil {
+			// Log error but continue with remaining files
 			log.Error("Failed to run diff for %s: %v", file, err)
 			continue
 		}

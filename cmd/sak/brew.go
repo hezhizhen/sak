@@ -14,6 +14,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	// maxConcurrentBrewInfo is the maximum number of concurrent brew info requests.
+	maxConcurrentBrewInfo = 10
+)
+
 func brewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "brew <keyword>",
@@ -56,7 +61,7 @@ func runBrewSearch(keyword string) error {
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
-	semaphore := make(chan struct{}, 10)
+	semaphore := make(chan struct{}, maxConcurrentBrewInfo)
 
 	for _, name := range packages {
 		wg.Add(1)
@@ -141,6 +146,37 @@ func printBrewResults(results []types.PackageInfo) {
 	}
 }
 
+// parseBrewInfo parses brew info JSON output into PackageInfo.
+func parseBrewInfo(name string, data []byte) types.PackageInfo {
+	var resp types.BrewInfoResponse
+	if err := json.Unmarshal(data, &resp); err != nil {
+		log.Debug("parse JSON failed for %s: %v", name, err)
+		return types.PackageInfo{Name: name, Version: "unknown", Type: "unknown", Failed: true}
+	}
+
+	if len(resp.Formulae) > 0 && resp.Formulae[0].Versions.Stable != "" {
+		return types.PackageInfo{
+			Name:      name,
+			Version:   resp.Formulae[0].Versions.Stable,
+			URL:       resp.Formulae[0].Homepage,
+			Type:      "formula",
+			Installed: len(resp.Formulae[0].Installed) > 0,
+		}
+	}
+	if len(resp.Casks) > 0 && resp.Casks[0].Version != "" {
+		return types.PackageInfo{
+			Name:      name,
+			Version:   resp.Casks[0].Version,
+			URL:       resp.Casks[0].Homepage,
+			Type:      "cask",
+			Installed: resp.Casks[0].Installed != "",
+		}
+	}
+
+	log.Debug("no version info found for %s", name)
+	return types.PackageInfo{Name: name, Version: "unknown", Type: "unknown", Failed: true}
+}
+
 func getPackageInfo(name string) types.PackageInfo {
 	log.Debug("Getting info for: %s", name)
 
@@ -151,47 +187,5 @@ func getPackageInfo(name string) types.PackageInfo {
 		return types.PackageInfo{Name: name, Version: "unknown", Type: "unknown", Failed: true}
 	}
 
-	var data struct {
-		Formulae []struct {
-			Homepage  string `json:"homepage"`
-			Installed []struct {
-				Version string `json:"version"`
-			} `json:"installed"`
-			Versions struct {
-				Stable string `json:"stable"`
-			} `json:"versions"`
-		} `json:"formulae"`
-		Casks []struct {
-			Homepage  string `json:"homepage"`
-			Version   string `json:"version"`
-			Installed string `json:"installed"`
-		} `json:"casks"`
-	}
-
-	if err := json.Unmarshal(output, &data); err != nil {
-		log.Debug("parse JSON failed for %s: %v", name, err)
-		return types.PackageInfo{Name: name, Version: "unknown", Type: "unknown", Failed: true}
-	}
-
-	if len(data.Formulae) > 0 && data.Formulae[0].Versions.Stable != "" {
-		return types.PackageInfo{
-			Name:      name,
-			Version:   data.Formulae[0].Versions.Stable,
-			URL:       data.Formulae[0].Homepage,
-			Type:      "formula",
-			Installed: len(data.Formulae[0].Installed) > 0,
-		}
-	}
-	if len(data.Casks) > 0 && data.Casks[0].Version != "" {
-		return types.PackageInfo{
-			Name:      name,
-			Version:   data.Casks[0].Version,
-			URL:       data.Casks[0].Homepage,
-			Type:      "cask",
-			Installed: data.Casks[0].Installed != "",
-		}
-	}
-
-	log.Debug("no version info found for %s", name)
-	return types.PackageInfo{Name: name, Version: "unknown", Type: "unknown", Failed: true}
+	return parseBrewInfo(name, output)
 }

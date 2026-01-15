@@ -56,8 +56,8 @@ func runWorktime(includeComparison bool) error {
 	now := time.Now()
 	log.Info("Today: %s", now.Format(time.DateOnly))
 
-	// Calculate all current period statistics
-	var comparisons []types.WorktimeComparison
+	// Calculate all current period statistics (day, week, month, quarter, year)
+	comparisons := make([]types.WorktimeComparison, 0, 5)
 
 	// Day: today vs Yesterday
 	currentDay := calculateDayDuration(records, now)
@@ -107,6 +107,18 @@ func runWorktime(includeComparison bool) error {
 	return nil
 }
 
+// calculatePeriodAverage 通用周期计算函数
+func calculatePeriodAverage(records []types.Record, period, label string, tr utils.TimeRange) types.WorktimeSummary {
+	average, count, err := worktime.CalculateAverageForRecords(records, tr.Start, tr.End)
+	return types.WorktimeSummary{
+		Period:  period,
+		Label:   label,
+		Average: average,
+		Count:   count,
+		Error:   err,
+	}
+}
+
 // calculateDayDuration 计算指定日期的工作时长
 func calculateDayDuration(records []types.Record, targetDate time.Time) types.WorktimeSummary {
 	targetYear, targetMonth, targetDay := targetDate.Date()
@@ -132,182 +144,52 @@ func calculateDayDuration(records []types.Record, targetDate time.Time) types.Wo
 	}
 }
 
-// calculateThisWeekAverage 计算本周平均工作时长
+// calculateThisWeekAverage 计算本周平均工作时长（周一为起始日）
 func calculateThisWeekAverage(records []types.Record, now time.Time) types.WorktimeSummary {
-	weekday := int(now.Weekday())
-	startOfWeek := now.AddDate(0, 0, -weekday)
-	startOfWeek = time.Date(startOfWeek.Year(), startOfWeek.Month(), startOfWeek.Day(), 0, 0, 0, 0, startOfWeek.Location())
-
-	endOfWeek := now
-	endOfWeek = time.Date(endOfWeek.Year(), endOfWeek.Month(), endOfWeek.Day(), 23, 59, 59, 0, endOfWeek.Location())
-
-	average, count, err := worktime.CalculateAverageForRecords(records, startOfWeek, endOfWeek)
-	return types.WorktimeSummary{
-		Period:  "week",
-		Label:   "Week",
-		Average: average,
-		Count:   count,
-		Error:   err,
-	}
+	tr := utils.WeekRange(now, true) // weekStartsOnMonday = true
+	return calculatePeriodAverage(records, "week", "Week", tr)
 }
 
 // calculateThisMonthAverage 计算本月平均工作时长
 func calculateThisMonthAverage(records []types.Record, now time.Time) types.WorktimeSummary {
-	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-	endOfMonth := now
-	endOfMonth = time.Date(endOfMonth.Year(), endOfMonth.Month(), endOfMonth.Day(), 23, 59, 59, 0, endOfMonth.Location())
-
-	average, count, err := worktime.CalculateAverageForRecords(records, startOfMonth, endOfMonth)
-	return types.WorktimeSummary{
-		Period:  "month",
-		Label:   "Month",
-		Average: average,
-		Count:   count,
-		Error:   err,
-	}
+	tr := utils.MonthRange(now)
+	return calculatePeriodAverage(records, "month", "Month", tr)
 }
 
 // calculateThisQuarterAverage 计算本季度平均工作时长
 func calculateThisQuarterAverage(records []types.Record, now time.Time) types.WorktimeSummary {
-	startOfQuarter, endOfQuarter := getQuarterRange(now.Year(), getQuarter(now), now.Location())
-	endOfQuarter = minTime(endOfQuarter, now)
-	endOfQuarter = time.Date(endOfQuarter.Year(), endOfQuarter.Month(), endOfQuarter.Day(), 23, 59, 59, 0, endOfQuarter.Location())
-
-	average, count, err := worktime.CalculateAverageForRecords(records, startOfQuarter, endOfQuarter)
-	return types.WorktimeSummary{
-		Period:  "quarter",
-		Label:   "Quarter",
-		Average: average,
-		Count:   count,
-		Error:   err,
-	}
+	tr := utils.QuarterRange(now)
+	return calculatePeriodAverage(records, "quarter", "Quarter", tr)
 }
 
 // calculateLastQuarterAverage 计算上季度平均工作时长
 func calculateLastQuarterAverage(records []types.Record, now time.Time) types.WorktimeSummary {
-	currentQuarter := getQuarter(now)
-	var lastQuarter int
-	var year int
-
-	if currentQuarter == 1 {
-		lastQuarter = 4
-		year = now.Year() - 1
-	} else {
-		lastQuarter = currentQuarter - 1
-		year = now.Year()
-	}
-
-	startOfLastQuarter, endOfLastQuarter := getQuarterRange(year, lastQuarter, now.Location())
-
-	average, count, err := worktime.CalculateAverageForRecords(records, startOfLastQuarter, endOfLastQuarter)
-	return types.WorktimeSummary{
-		Period:  "quarter",
-		Label:   "Quarter",
-		Average: average,
-		Count:   count,
-		Error:   err,
-	}
+	tr := utils.LastQuarterRange(now)
+	return calculatePeriodAverage(records, "quarter", "Quarter", tr)
 }
 
 // calculateThisYearAverage 计算今年平均工作时长
 func calculateThisYearAverage(records []types.Record, now time.Time) types.WorktimeSummary {
-	startOfYear := time.Date(now.Year(), time.January, 1, 0, 0, 0, 0, now.Location())
-	endOfYear := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, now.Location())
-
-	average, count, err := worktime.CalculateAverageForRecords(records, startOfYear, endOfYear)
-	return types.WorktimeSummary{
-		Period:  "year",
-		Label:   "Year",
-		Average: average,
-		Count:   count,
-		Error:   err,
-	}
+	tr := utils.YearRange(now)
+	return calculatePeriodAverage(records, "year", "Year", tr)
 }
 
-// calculateLastWeekAverage 计算上周平均工作时长
+// calculateLastWeekAverage 计算上周平均工作时长（周一为起始日）
 func calculateLastWeekAverage(records []types.Record, now time.Time) types.WorktimeSummary {
-	weekday := int(now.Weekday())
-	startOfThisWeek := now.AddDate(0, 0, -weekday)
-	startOfLastWeek := startOfThisWeek.AddDate(0, 0, -7)
-	startOfLastWeek = time.Date(startOfLastWeek.Year(), startOfLastWeek.Month(), startOfLastWeek.Day(), 0, 0, 0, 0, startOfLastWeek.Location())
-
-	endOfLastWeek := startOfThisWeek.Add(-time.Second)
-	endOfLastWeek = time.Date(endOfLastWeek.Year(), endOfLastWeek.Month(), endOfLastWeek.Day(), 23, 59, 59, 0, endOfLastWeek.Location())
-
-	average, count, err := worktime.CalculateAverageForRecords(records, startOfLastWeek, endOfLastWeek)
-	return types.WorktimeSummary{
-		Period:  "week",
-		Label:   "Week",
-		Average: average,
-		Count:   count,
-		Error:   err,
-	}
+	tr := utils.LastWeekRange(now, true) // weekStartsOnMonday = true
+	return calculatePeriodAverage(records, "week", "Week", tr)
 }
 
 // calculateLastMonthAverage 计算上月平均工作时长
 func calculateLastMonthAverage(records []types.Record, now time.Time) types.WorktimeSummary {
-	startOfThisMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-	startOfLastMonth := startOfThisMonth.AddDate(0, -1, 0)
-
-	endOfLastMonth := startOfThisMonth.Add(-time.Second)
-
-	average, count, err := worktime.CalculateAverageForRecords(records, startOfLastMonth, endOfLastMonth)
-	return types.WorktimeSummary{
-		Period:  "month",
-		Label:   "Month",
-		Average: average,
-		Count:   count,
-		Error:   err,
-	}
+	tr := utils.LastMonthRange(now)
+	return calculatePeriodAverage(records, "month", "Month", tr)
 }
 
 // calculateLastYearAverage 计算去年平均工作时长
 func calculateLastYearAverage(records []types.Record, now time.Time) types.WorktimeSummary {
-	startOfLastYear := time.Date(now.Year()-1, time.January, 1, 0, 0, 0, 0, now.Location())
-	endOfLastYear := time.Date(now.Year()-1, time.December, 31, 23, 59, 59, 0, now.Location())
-
-	average, count, err := worktime.CalculateAverageForRecords(records, startOfLastYear, endOfLastYear)
-	return types.WorktimeSummary{
-		Period:  "year",
-		Label:   "Year",
-		Average: average,
-		Count:   count,
-		Error:   err,
-	}
-}
-
-// getQuarter 根据时间获取季度（1-4）
-func getQuarter(t time.Time) int {
-	month := int(t.Month())
-	return (month-1)/3 + 1
-}
-
-// getQuarterRange 获取指定年份和季度的起止时间
-func getQuarterRange(year, quarter int, loc *time.Location) (time.Time, time.Time) {
-	var startMonth, endMonth time.Month
-	switch quarter {
-	case 1:
-		startMonth, endMonth = time.January, time.March
-	case 2:
-		startMonth, endMonth = time.April, time.June
-	case 3:
-		startMonth, endMonth = time.July, time.September
-	case 4:
-		startMonth, endMonth = time.October, time.December
-	}
-
-	start := time.Date(year, startMonth, 1, 0, 0, 0, 0, loc)
-	end := time.Date(year, endMonth+1, 1, 0, 0, 0, 0, loc).Add(-time.Second)
-
-	return start, end
-}
-
-// minTime 返回两个时间中较早的一个
-func minTime(a, b time.Time) time.Time {
-	if a.Before(b) {
-		return a
-	}
-	return b
+	tr := utils.LastYearRange(now)
+	return calculatePeriodAverage(records, "year", "Year", tr)
 }
 
 // formatWorktimeTable 格式化工作时间统计表格
@@ -328,7 +210,7 @@ func formatWorktimeTable(comparisons []types.WorktimeComparison, includeComparis
 		// Format current period duration
 		var currentStr string
 		if current.Error != nil {
-			log.Error("failed to format current period duration: %v", current.Error)
+			log.Debug("no data for %s: %v", current.Period, current.Error)
 			currentStr = "-"
 		} else {
 			currentStr = utils.FormatDuration(current.Average)
@@ -338,7 +220,7 @@ func formatWorktimeTable(comparisons []types.WorktimeComparison, includeComparis
 			// Format previous period duration
 			var previousStr string
 			if comp.Previous.Error != nil {
-				log.Error("failed to format previous period duration: %v", comp.Previous.Error)
+				log.Debug("no data for previous %s: %v", comp.Previous.Period, comp.Previous.Error)
 				previousStr = "-"
 			} else {
 				previousStr = utils.FormatDuration(comp.Previous.Average)

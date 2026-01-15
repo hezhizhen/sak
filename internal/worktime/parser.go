@@ -80,7 +80,7 @@ func parseSingleRecord(dateStr, startStr, endStr string) (types.Record, error) {
 	// Calculate duration
 	duration := endTime.Sub(startTime)
 	if duration < 0 {
-		// Handle case where end time is next day
+		// Handle case where end time is next day (e.g., start 22:00, end 06:00)
 		endTime = endTime.Add(24 * time.Hour)
 		duration = endTime.Sub(startTime)
 	}

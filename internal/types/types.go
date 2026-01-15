@@ -12,6 +12,24 @@ type PackageInfo struct {
 	Failed    bool // true if failed to get package info
 }
 
+// BrewInfoResponse represents the JSON response from brew info --json=v2.
+type BrewInfoResponse struct {
+	Formulae []struct {
+		Homepage  string `json:"homepage"`
+		Installed []struct {
+			Version string `json:"version"`
+		} `json:"installed"`
+		Versions struct {
+			Stable string `json:"stable"`
+		} `json:"versions"`
+	} `json:"formulae"`
+	Casks []struct {
+		Homepage  string `json:"homepage"`
+		Version   string `json:"version"`
+		Installed string `json:"installed"`
+	} `json:"casks"`
+}
+
 // Record represents a single work record.
 type Record struct {
 	Date     time.Time
