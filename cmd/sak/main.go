@@ -30,6 +30,7 @@ func main() {
 	cmd.AddCommand(worktimeCmd())
 	cmd.AddCommand(compareCmd())
 	cmd.AddCommand(brewCmd())
+	cmd.AddCommand(ccusageCmd())
 
 	if err := cmd.Execute(); err != nil {
 		log.Error("%v", err)

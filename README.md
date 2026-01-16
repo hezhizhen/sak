@@ -46,6 +46,17 @@ Search Homebrew packages and display their info.
 sak brew git                # Search packages matching "git"
 ```
 
+### ccusage
+
+Run ccusage tools to check AI coding assistant usage.
+
+```bash
+sak ccusage claude          # Run npx ccusage@latest
+sak ccusage amp             # Run npx @ccusage/amp@latest
+sak ccusage opencode        # Run npx @ccusage/opencode@latest
+sak ccusage codex           # Run npx @ccusage/codex@latest
+```
+
 ## Global Flags
 
 - `--verbose` - Enable debug output
