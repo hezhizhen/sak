@@ -1,0 +1,60 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+vars:
+  PROJECT_PKG: github.com/hezhizhen/sak
+  CLI_EXE: sak
+  CLI_PKG: "{{.PROJECT_PKG}}/cmd/sak"
+  GIT_COMMIT:
+    sh: git rev-parse HEAD
+  GIT_BRANCH:
+    sh: git rev-parse --abbrev-ref HEAD
+  GIT_TAG:
+    sh: git describe --tags --abbrev=0 --exact-match 2>/dev/null || true
+  GIT_DIRTY:
+    sh: test -n "$(git status --porcelain)" && echo "dirty" || echo "clean"
+  BUILD_DATE:
+    sh: date -u '+%Y-%m-%dT%H:%M:%SZ'
+  GO_VERSION:
+    sh: go env GOVERSION
+  LDFLAGS: >-
+    -w
+    -X '{{.PROJECT_PKG}}/internal/version.GitCommit={{.GIT_COMMIT}}'
+    -X '{{.PROJECT_PKG}}/internal/version.GitBranch={{.GIT_BRANCH}}'
+    -X '{{.PROJECT_PKG}}/internal/version.GitTag={{.GIT_TAG}}'
+    -X '{{.PROJECT_PKG}}/internal/version.GitTreeState={{.GIT_DIRTY}}'
+    -X '{{.PROJECT_PKG}}/internal/version.BuildDate={{.BUILD_DATE}}'
+    -X '{{.PROJECT_PKG}}/internal/version.GoVersion={{.GO_VERSION}}'
+
+tasks:
+  test:
+    desc: Run tests
+    cmds:
+      - go test ./...
+
+  clean:
+    desc: Remove ignored files
+    cmds:
+      - git status --ignored --short | grep '^!! ' | sed 's/!! //' | xargs rm -rf
+
+  build-mac:
+    desc: Build for macOS (amd64)
+    cmds:
+      - GOARCH=amd64 CGO_ENABLED=0 GOOS=darwin go build -v --ldflags="{{.LDFLAGS}}" -o bin/{{.CLI_EXE}} {{.CLI_PKG}}
+
+  build-linux:
+    desc: Build for Linux (amd64)
+    cmds:
+      - GOARCH=amd64 CGO_ENABLED=0 GOOS=linux go build -v --ldflags="{{.LDFLAGS}}" -o bin/{{.CLI_EXE}} {{.CLI_PKG}}
+
+  update-local:
+    desc: Install locally and update fish completions
+    cmds:
+      - go install -v --ldflags="{{.LDFLAGS}}" ./...
+      - sak completion fish > ~/.config/fish/completions/sak.fish
+
+  release-snapshot:
+    desc: Test release build locally
+    cmds:
+      - goreleaser release --snapshot --clean
