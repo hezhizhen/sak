@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
 
-version: '3'
+version: "3"
 
 vars:
   PROJECT_PKG: github.com/hezhizhen/sak
@@ -21,14 +21,13 @@ vars:
   VERSION:
     sh: git describe --tags --abbrev=0 --exact-match 2>/dev/null || echo dev
   LDFLAGS: >-
-    -w
-    -X '{{.PROJECT_PKG}}/internal/version.Version={{.VERSION}}'
-    -X '{{.PROJECT_PKG}}/internal/version.GitCommit={{.GIT_COMMIT}}'
-    -X '{{.PROJECT_PKG}}/internal/version.GitBranch={{.GIT_BRANCH}}'
-    -X '{{.PROJECT_PKG}}/internal/version.GitTag={{.GIT_TAG}}'
-    -X '{{.PROJECT_PKG}}/internal/version.GitTreeState={{.GIT_DIRTY}}'
-    -X '{{.PROJECT_PKG}}/internal/version.BuildDate={{.BUILD_DATE}}'
-    -X '{{.PROJECT_PKG}}/internal/version.GoVersion={{.GO_VERSION}}'
+    -w -X '{{.PROJECT_PKG}}/internal/version.Version={{.VERSION}}' -X
+    '{{.PROJECT_PKG}}/internal/version.GitCommit={{.GIT_COMMIT}}' -X
+    '{{.PROJECT_PKG}}/internal/version.GitBranch={{.GIT_BRANCH}}' -X
+    '{{.PROJECT_PKG}}/internal/version.GitTag={{.GIT_TAG}}' -X
+    '{{.PROJECT_PKG}}/internal/version.GitTreeState={{.GIT_DIRTY}}' -X
+    '{{.PROJECT_PKG}}/internal/version.BuildDate={{.BUILD_DATE}}' -X
+    '{{.PROJECT_PKG}}/internal/version.GoVersion={{.GO_VERSION}}'
 
 tasks:
   test:
@@ -44,20 +43,17 @@ tasks:
   build-mac:
     desc: Build for macOS (amd64)
     cmds:
-      - GOARCH=amd64 CGO_ENABLED=0 GOOS=darwin go build -v --ldflags="{{.LDFLAGS}}" -o bin/{{.CLI_EXE}} {{.CLI_PKG}}
+      - GOARCH=amd64 CGO_ENABLED=0 GOOS=darwin go build -v
+        --ldflags="{{.LDFLAGS}}" -o bin/{{.CLI_EXE}} {{.CLI_PKG}}
 
   build-linux:
     desc: Build for Linux (amd64)
     cmds:
-      - GOARCH=amd64 CGO_ENABLED=0 GOOS=linux go build -v --ldflags="{{.LDFLAGS}}" -o bin/{{.CLI_EXE}} {{.CLI_PKG}}
-
-  update-local:
-    desc: Install locally and update fish completions
-    cmds:
-      - go install -v --ldflags="{{.LDFLAGS}}" ./...
-      - sak completion fish > ~/.config/fish/completions/sak.fish
+      - GOARCH=amd64 CGO_ENABLED=0 GOOS=linux go build -v
+        --ldflags="{{.LDFLAGS}}" -o bin/{{.CLI_EXE}} {{.CLI_PKG}}
 
   release-snapshot:
     desc: Test release build locally
     cmds:
-      - GIT_TREE_STATE={{.GIT_DIRTY}} GOVERSION={{.GO_VERSION}} goreleaser release --snapshot --clean
+      - GIT_TREE_STATE={{.GIT_DIRTY}} GOVERSION={{.GO_VERSION}} goreleaser
+        release --snapshot --clean
