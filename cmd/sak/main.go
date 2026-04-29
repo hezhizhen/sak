@@ -31,6 +31,7 @@ func main() {
 	cmd.AddCommand(compareCmd())
 	cmd.AddCommand(brewCmd())
 	cmd.AddCommand(ccusageCmd())
+	cmd.AddCommand(updateCmd())
 
 	if err := cmd.Execute(); err != nil {
 		log.Error("%v", err)
