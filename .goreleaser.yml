@@ -1,0 +1,59 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: sak
+    main: ./cmd/sak
+    binary: sak
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/hezhizhen/sak/internal/version.Version={{.Version}}
+      - -X github.com/hezhizhen/sak/internal/version.GitCommit={{.Commit}}
+      - -X github.com/hezhizhen/sak/internal/version.BuildDate={{.Date}}
+      - -X github.com/hezhizhen/sak/internal/version.GitTag={{.Tag}}
+
+archives:
+  - id: sak
+    formats:
+      - tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- .Os }}_
+      {{- .Arch }}
+    files:
+      - README.md
+      - LICENSE*
+
+checksum:
+  name_template: 'checksums.txt'
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - '^ci:'
+      - Merge pull request
+      - Merge branch
+
+release:
+  github:
+    owner: hezhizhen
+    name: sak
+  draft: false
+  prerelease: auto
+  name_template: "{{.ProjectName}} {{.Version}}"

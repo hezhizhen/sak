@@ -36,3 +36,7 @@ build-linux:
 update-local:
 	go install -v --ldflags="$(LDFLAGS)" ./...
 	sak completion fish > ~/.config/fish/completions/sak.fish
+
+.PHONY: release-snapshot
+release-snapshot:
+	goreleaser release --snapshot --clean
