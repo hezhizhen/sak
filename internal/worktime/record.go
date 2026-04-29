@@ -10,7 +10,7 @@ import "time"
 // - duration < 9 hours
 func hasLeave(start, end time.Time) bool {
 	afternoonStart := time.Date(start.Year(), start.Month(), start.Day(), AfternoonStartHour, 0, 0, 0, start.Location())
-	earlyEnd := time.Date(end.Year(), end.Month(), end.Day(), EarlyEndHour, 0, 0, 0, end.Location())
+	earlyEnd := time.Date(start.Year(), start.Month(), start.Day(), EarlyEndHour, 0, 0, 0, start.Location())
 
 	return start.After(afternoonStart) ||
 		end.Before(earlyEnd) ||

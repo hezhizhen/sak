@@ -118,19 +118,23 @@ func runWorktimeAnalyze(year int) error {
 	// --- Schedule ---
 	fmt.Println("--- Schedule ---")
 	var totalArrivalMinutes, totalLeaveMinutes int
-	var earliestArrival, latestLeave time.Time
+	var earliestArrivalMin int
+	var latestLeaveMin int
 	var earliestArrivalDate, latestLeaveDate time.Time
 	for i, r := range normalDays {
 		arrMin := r.Start.Hour()*60 + r.Start.Minute()
 		leaveMin := r.End.Hour()*60 + r.End.Minute()
+		if r.End.Day() != r.Start.Day() || r.End.Month() != r.Start.Month() {
+			leaveMin += 24 * 60
+		}
 		totalArrivalMinutes += arrMin
 		totalLeaveMinutes += leaveMin
-		if i == 0 || arrMin < earliestArrival.Hour()*60+earliestArrival.Minute() {
-			earliestArrival = r.Start
+		if i == 0 || arrMin < earliestArrivalMin {
+			earliestArrivalMin = arrMin
 			earliestArrivalDate = r.Date
 		}
-		if i == 0 || leaveMin > latestLeave.Hour()*60+latestLeave.Minute() {
-			latestLeave = r.End
+		if i == 0 || leaveMin > latestLeaveMin {
+			latestLeaveMin = leaveMin
 			latestLeaveDate = r.Date
 		}
 	}
@@ -138,8 +142,8 @@ func runWorktimeAnalyze(year int) error {
 	avgLeaveMin := totalLeaveMinutes / len(normalDays)
 	fmt.Printf("Avg Arrival:   %02d:%02d\n", avgArrMin/60, avgArrMin%60)
 	fmt.Printf("Avg Leave:     %02d:%02d\n", avgLeaveMin/60, avgLeaveMin%60)
-	fmt.Printf("Earliest:      %02d:%02d (%s)\n", earliestArrival.Hour(), earliestArrival.Minute(), earliestArrivalDate.Format("2006-01-02"))
-	fmt.Printf("Latest Leave:  %02d:%02d (%s)\n", latestLeave.Hour(), latestLeave.Minute(), latestLeaveDate.Format("2006-01-02"))
+	fmt.Printf("Earliest:      %02d:%02d (%s)\n", earliestArrivalMin/60, earliestArrivalMin%60, earliestArrivalDate.Format("2006-01-02"))
+	fmt.Printf("Latest Leave:  %02d:%02d (%s)\n", latestLeaveMin/60, latestLeaveMin%60, latestLeaveDate.Format("2006-01-02"))
 
 	var longestDay types.Record
 	for i, r := range normalDays {
