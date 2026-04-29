@@ -4,8 +4,16 @@ Swiss Army Knife - A personal CLI toolset.
 
 ## Installation
 
+### From source
+
 ```bash
 go install github.com/hezhizhen/sak/cmd/sak@latest
+```
+
+### From release binary
+
+```bash
+curl -sL https://raw.githubusercontent.com/hezhizhen/sak/master/install.sh | sh
 ```
 
 ## Commands
