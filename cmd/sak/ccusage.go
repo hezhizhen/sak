@@ -22,6 +22,10 @@ Supported subcommands:
 		ValidArgs: []string{"claude", "amp", "opencode", "codex"},
 		Args:      cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if _, err := exec.LookPath("npx"); err != nil {
+				return fmt.Errorf("npx not found in PATH. Please install Node.js: https://nodejs.org")
+			}
+
 			packages := map[string]string{
 				"claude":   "ccusage@latest",
 				"amp":      "@ccusage/amp@latest",

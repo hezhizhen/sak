@@ -44,6 +44,10 @@ func brewSearchCmd() *cobra.Command {
 }
 
 func runBrewSearch(keyword string) error {
+	if _, err := exec.LookPath("brew"); err != nil {
+		return fmt.Errorf("brew not found in PATH. Please install Homebrew: https://brew.sh")
+	}
+
 	log.Debug("Searching for: %s", keyword)
 
 	cmd := exec.Command("brew", "search", keyword)
