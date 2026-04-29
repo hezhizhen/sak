@@ -20,8 +20,11 @@ builds:
       - -s -w
       - -X github.com/hezhizhen/sak/internal/version.Version={{.Version}}
       - -X github.com/hezhizhen/sak/internal/version.GitCommit={{.Commit}}
-      - -X github.com/hezhizhen/sak/internal/version.BuildDate={{.Date}}
+      - -X github.com/hezhizhen/sak/internal/version.GitBranch={{.Branch}}
       - -X github.com/hezhizhen/sak/internal/version.GitTag={{.Tag}}
+      - -X github.com/hezhizhen/sak/internal/version.GitTreeState={{.Env.GIT_TREE_STATE}}
+      - -X github.com/hezhizhen/sak/internal/version.BuildDate={{.Date}}
+      - -X github.com/hezhizhen/sak/internal/version.GoVersion={{.Env.GOVERSION}}
 
 archives:
   - id: sak

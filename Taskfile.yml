@@ -18,8 +18,11 @@ vars:
     sh: date -u '+%Y-%m-%dT%H:%M:%SZ'
   GO_VERSION:
     sh: go env GOVERSION
+  VERSION:
+    sh: git describe --tags --abbrev=0 --exact-match 2>/dev/null || echo dev
   LDFLAGS: >-
     -w
+    -X '{{.PROJECT_PKG}}/internal/version.Version={{.VERSION}}'
     -X '{{.PROJECT_PKG}}/internal/version.GitCommit={{.GIT_COMMIT}}'
     -X '{{.PROJECT_PKG}}/internal/version.GitBranch={{.GIT_BRANCH}}'
     -X '{{.PROJECT_PKG}}/internal/version.GitTag={{.GIT_TAG}}'
@@ -57,4 +60,4 @@ tasks:
   release-snapshot:
     desc: Test release build locally
     cmds:
-      - goreleaser release --snapshot --clean
+      - GIT_TREE_STATE={{.GIT_DIRTY}} GOVERSION={{.GO_VERSION}} goreleaser release --snapshot --clean
