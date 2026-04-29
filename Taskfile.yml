@@ -42,18 +42,26 @@ tasks:
 
   build-mac:
     desc: Build for macOS (amd64)
+    env:
+      GOARCH: amd64
+      CGO_ENABLED: "0"
+      GOOS: darwin
     cmds:
-      - GOARCH=amd64 CGO_ENABLED=0 GOOS=darwin go build -v
-        --ldflags="{{.LDFLAGS}}" -o bin/{{.CLI_EXE}} {{.CLI_PKG}}
+      - go build -v --ldflags="{{.LDFLAGS}}" -o bin/{{.CLI_EXE}} {{.CLI_PKG}}
 
   build-linux:
     desc: Build for Linux (amd64)
+    env:
+      GOARCH: amd64
+      CGO_ENABLED: "0"
+      GOOS: linux
     cmds:
-      - GOARCH=amd64 CGO_ENABLED=0 GOOS=linux go build -v
-        --ldflags="{{.LDFLAGS}}" -o bin/{{.CLI_EXE}} {{.CLI_PKG}}
+      - go build -v --ldflags="{{.LDFLAGS}}" -o bin/{{.CLI_EXE}} {{.CLI_PKG}}
 
   release-snapshot:
     desc: Test release build locally
+    env:
+      GIT_TREE_STATE: "{{.GIT_DIRTY}}"
+      GOVERSION: "{{.GO_VERSION}}"
     cmds:
-      - GIT_TREE_STATE={{.GIT_DIRTY}} GOVERSION={{.GO_VERSION}} goreleaser
-        release --snapshot --clean
+      - goreleaser release --snapshot --clean
