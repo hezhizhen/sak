@@ -25,7 +25,6 @@ Show version information.
 ```bash
 sak version
 sak version --json
-sak version --short
 ```
 
 ### worktime
@@ -65,6 +64,23 @@ sak ccusage opencode        # Run npx @ccusage/opencode@latest
 sak ccusage codex           # Run npx @ccusage/codex@latest
 ```
 
+### update
+
+Update sak to the latest release.
+
+```bash
+sak update
+```
+
 ## Global Flags
 
 - `--verbose` - Enable debug output
+
+## Release
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+GitHub Actions will build binaries for linux/darwin (amd64/arm64) and create a GitHub Release automatically.
