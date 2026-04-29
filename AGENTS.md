@@ -4,9 +4,11 @@
 
 - 语言：Go
 - CLI 框架：Cobra
-- 构建：`go build ./...`
-- 测试：`go test ./...`
+- 构建工具：[Task](https://taskfile.dev)
+- 构建：`task build-mac` 或 `go build ./...`
+- 测试：`task test` 或 `go test ./...`
 - 检查：`go vet ./...`
+- 发布测试：`task release-snapshot`
 
 ## 规则
 

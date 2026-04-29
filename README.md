@@ -32,8 +32,10 @@ sak version --json
 Analyze work time data from `worktime.csv` in current directory.
 
 ```bash
-sak worktime                # Show current period statistics
-sak worktime -c             # Include comparison with previous periods
+sak worktime                      # Show current period statistics
+sak worktime -c                   # Include comparison with previous periods
+sak worktime analyze              # Analyze work time patterns
+sak worktime analyze --year 2025  # Analyze specific year
 ```
 
 ### compare
@@ -50,7 +52,7 @@ sak compare config/         # Compare all files in ./config/ with ~/config/
 Search Homebrew packages and display their info.
 
 ```bash
-sak brew git                # Search packages matching "git"
+sak brew search git         # Search packages matching "git"
 ```
 
 ### ccusage
