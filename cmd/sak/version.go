@@ -11,7 +11,6 @@ import (
 
 func versionCmd() *cobra.Command {
 	var jsonOutput bool
-	var shortOutput bool
 
 	cmd := &cobra.Command{
 		Use:   "version",
@@ -21,27 +20,20 @@ func versionCmd() *cobra.Command {
 Example - print version:
   sak version
   sak version --json
-  sak version --short
 `,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runVersion(jsonOutput, shortOutput)
+			return runVersion(jsonOutput)
 		},
 	}
 
 	cmd.Flags().BoolVar(&jsonOutput, "json", false, "Output version information in JSON format")
-	cmd.Flags().BoolVar(&shortOutput, "short", false, "Output only the version number")
 
 	return cmd
 }
 
-func runVersion(jsonOutput, shortOutput bool) error {
+func runVersion(jsonOutput bool) error {
 	buildInfo := version.GetBuildInfo()
-
-	if shortOutput {
-		fmt.Println(buildInfo.Version)
-		return nil
-	}
 
 	if jsonOutput {
 		encoder := json.NewEncoder(os.Stdout)
@@ -49,45 +41,6 @@ func runVersion(jsonOutput, shortOutput bool) error {
 		return encoder.Encode(buildInfo)
 	}
 
-	// Standard formatted output
-	items := [][]string{
-		{"Version", buildInfo.Version},
-	}
-
-	// Build information section
-	if buildInfo.BuildDate != "" {
-		items = append(items, []string{"Build Date", buildInfo.BuildDate})
-	}
-	// Git information section
-	if buildInfo.GitCommit != "" {
-		items = append(items, []string{"Git Commit", buildInfo.GitCommit})
-	}
-	if buildInfo.GitBranch != "" {
-		items = append(items, []string{"Git Branch", buildInfo.GitBranch})
-	}
-	if buildInfo.GitTag != "" {
-		items = append(items, []string{"Git Tag", buildInfo.GitTag})
-	}
-	if buildInfo.GitTreeState != "" {
-		items = append(items, []string{"Git Tree State", buildInfo.GitTreeState})
-	}
-
-	// Go information section
-	items = append(items, []string{"Go Version", buildInfo.GoVersion})
-	items = append(items, []string{"Platform", fmt.Sprintf("%s/%s", buildInfo.GOOS, buildInfo.GOARCH)})
-
-	// Find the maximum label width for alignment
-	maxWidth := 0
-	for _, item := range items {
-		if len(item[0]) > maxWidth {
-			maxWidth = len(item[0])
-		}
-	}
-
-	// Print formatted output
-	for _, item := range items {
-		fmt.Printf("%-*s: %s\n", maxWidth, item[0], item[1])
-	}
-
+	fmt.Println(buildInfo.Version)
 	return nil
 }
