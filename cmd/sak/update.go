@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -107,24 +108,17 @@ func getLatestVersion() (string, error) {
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
+	var release struct {
+		TagName string `json:"tag_name"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+		return "", fmt.Errorf("failed to parse GitHub API response: %w", err)
+	}
+	if release.TagName == "" {
+		return "", fmt.Errorf("no tag_name in GitHub API response")
 	}
 
-	// Simple extraction without importing encoding/json for a single field
-	for _, line := range strings.Split(string(body), "\n") {
-		if strings.Contains(line, `"tag_name"`) {
-			parts := strings.Split(line, `"`)
-			for i, p := range parts {
-				if p == "tag_name" && i+2 < len(parts) {
-					return parts[i+2], nil
-				}
-			}
-		}
-	}
-
-	return "", fmt.Errorf("could not parse latest version from GitHub API")
+	return release.TagName, nil
 }
 
 func downloadFile(url, dest string) error {
