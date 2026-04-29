@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hezhizhen/sak/internal/log"
 	"github.com/hezhizhen/sak/internal/types"
 )
 
@@ -38,12 +39,19 @@ func ParseRecordsFromFile(filename string) ([]types.Record, error) {
 		}
 
 		if len(row) != 3 {
-			return nil, fmt.Errorf("invalid CSV format at row %d: expected 3 columns, got %d", i+1, len(row))
+			log.Warn("skipping row %d (%v): expected 3 columns, got %d", i+1, row, len(row))
+			continue
+		}
+
+		if row[2] == "" {
+			log.Warn("skipping row %d (%s): missing end time", i+1, row[0])
+			continue
 		}
 
 		record, err := parseSingleRecord(row[0], row[1], row[2])
 		if err != nil {
-			return nil, fmt.Errorf("error parsing row %d: %v", i+1, err)
+			log.Warn("skipping row %d (%v): %v", i+1, row, err)
+			continue
 		}
 
 		records = append(records, record)
