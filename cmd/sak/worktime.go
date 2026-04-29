@@ -29,6 +29,8 @@ Examples:
   sak worktime                      # 显示当前时间范围统计
   sak worktime -c                   # 显示当前统计 + 历史对比
   sak worktime --include-comparison # 同上
+  sak worktime analyze              # 工时分析
+  sak worktime analyze --year 2025  # 仅分析指定年份
 `,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -38,7 +40,189 @@ Examples:
 
 	cmd.Flags().BoolVarP(&includeComparison, "include-comparison", "c", false, "包含历史数据对比")
 
+	cmd.AddCommand(worktimeAnalyzeCmd())
+
 	return cmd
+}
+
+func worktimeAnalyzeCmd() *cobra.Command {
+	var year int
+
+	cmd := &cobra.Command{
+		Use:   "analyze",
+		Short: "分析工时模式",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runWorktimeAnalyze(year)
+		},
+	}
+
+	cmd.Flags().IntVar(&year, "year", 0, "要分析的年份（默认：全部记录）")
+
+	return cmd
+}
+
+func runWorktimeAnalyze(year int) error {
+	if _, err := os.Stat(worktimeFile); os.IsNotExist(err) {
+		return fmt.Errorf("%q not found in current directory", worktimeFile)
+	}
+
+	allRecords, err := worktime.ParseRecordsFromFile(worktimeFile)
+	if err != nil {
+		return fmt.Errorf("failed to parse %q: %v", worktimeFile, err)
+	}
+
+	// Filter by year if specified
+	var records []types.Record
+	if year > 0 {
+		for _, r := range allRecords {
+			if r.Date.Year() == year {
+				records = append(records, r)
+			}
+		}
+	} else {
+		records = allRecords
+	}
+
+	if len(records) == 0 {
+		return fmt.Errorf("no records found")
+	}
+
+	// Separate normal and leave days
+	var normalDays, leaveDays []types.Record
+	for _, r := range records {
+		if r.Normal {
+			normalDays = append(normalDays, r)
+		} else {
+			leaveDays = append(leaveDays, r)
+		}
+	}
+
+	firstDate := records[0].Date
+	lastDate := records[len(records)-1].Date
+
+	fmt.Println("=== Work Time Analysis ===")
+	fmt.Println()
+	fmt.Printf("Period: %s ~ %s (%d days, %d leave days excluded)\n",
+		firstDate.Format("2006-01-02"),
+		lastDate.Format("2006-01-02"),
+		len(records),
+		len(leaveDays))
+	fmt.Println()
+
+	// Use only normal days for all analysis
+	if len(normalDays) == 0 {
+		return fmt.Errorf("no normal work days found")
+	}
+
+	// --- Schedule ---
+	fmt.Println("--- Schedule ---")
+	var totalArrivalMinutes, totalLeaveMinutes int
+	var earliestArrival, latestLeave time.Time
+	var earliestArrivalDate, latestLeaveDate time.Time
+	for i, r := range normalDays {
+		arrMin := r.Start.Hour()*60 + r.Start.Minute()
+		leaveMin := r.End.Hour()*60 + r.End.Minute()
+		totalArrivalMinutes += arrMin
+		totalLeaveMinutes += leaveMin
+		if i == 0 || arrMin < earliestArrival.Hour()*60+earliestArrival.Minute() {
+			earliestArrival = r.Start
+			earliestArrivalDate = r.Date
+		}
+		if i == 0 || leaveMin > latestLeave.Hour()*60+latestLeave.Minute() {
+			latestLeave = r.End
+			latestLeaveDate = r.Date
+		}
+	}
+	avgArrMin := totalArrivalMinutes / len(normalDays)
+	avgLeaveMin := totalLeaveMinutes / len(normalDays)
+	fmt.Printf("Avg Arrival:   %02d:%02d\n", avgArrMin/60, avgArrMin%60)
+	fmt.Printf("Avg Leave:     %02d:%02d\n", avgLeaveMin/60, avgLeaveMin%60)
+	fmt.Printf("Earliest:      %02d:%02d (%s)\n", earliestArrival.Hour(), earliestArrival.Minute(), earliestArrivalDate.Format("2006-01-02"))
+	fmt.Printf("Latest Leave:  %02d:%02d (%s)\n", latestLeave.Hour(), latestLeave.Minute(), latestLeaveDate.Format("2006-01-02"))
+
+	var longestDay types.Record
+	for i, r := range normalDays {
+		if i == 0 || r.Duration > longestDay.Duration {
+			longestDay = r
+		}
+	}
+	fmt.Printf("Longest Day:   %s (%s)\n", utils.FormatDuration(longestDay.Duration), longestDay.Date.Format("2006-01-02"))
+	fmt.Println()
+
+	// --- Duration Distribution ---
+	fmt.Println("--- Duration Distribution ---")
+	buckets := []struct {
+		label string
+		min   float64
+		max   float64
+	}{
+		{" 9-10h", 9, 10},
+		{"10-11h", 10, 11},
+		{"11-12h", 11, 12},
+		{"  12h+", 12, 100},
+	}
+	counts := make([]int, len(buckets))
+	for _, r := range normalDays {
+		hours := r.Duration.Hours()
+		for i, b := range buckets {
+			if hours >= b.min && hours < b.max {
+				counts[i]++
+				break
+			}
+		}
+	}
+	maxCount := 0
+	for _, c := range counts {
+		if c > maxCount {
+			maxCount = c
+		}
+	}
+	maxBarWidth := 30
+	for i, b := range buckets {
+		barLen := 0
+		if maxCount > 0 {
+			barLen = counts[i] * maxBarWidth / maxCount
+		}
+		pct := float64(counts[i]) * 100 / float64(len(normalDays))
+		bar := strings.Repeat("█", barLen)
+		fmt.Printf("%s: %-*s %3d (%2.0f%%)\n", b.label, maxBarWidth, bar, counts[i], pct)
+	}
+	fmt.Println()
+
+	// --- By Weekday ---
+	fmt.Println("--- By Weekday ---")
+	weekdayTotals := make([]time.Duration, 7)
+	weekdayCounts := make([]int, 7)
+	for _, r := range normalDays {
+		wd := r.Date.Weekday()
+		weekdayTotals[wd] += r.Duration
+		weekdayCounts[wd]++
+	}
+	weekdays := []time.Weekday{time.Monday, time.Tuesday, time.Wednesday, time.Thursday, time.Friday, time.Saturday, time.Sunday}
+	var maxAvg time.Duration
+	weekdayAvgs := make([]time.Duration, 7)
+	for _, wd := range weekdays {
+		if weekdayCounts[wd] > 0 {
+			weekdayAvgs[wd] = weekdayTotals[wd] / time.Duration(weekdayCounts[wd])
+			if weekdayAvgs[wd] > maxAvg {
+				maxAvg = weekdayAvgs[wd]
+			}
+		}
+	}
+	for _, wd := range weekdays {
+		if weekdayCounts[wd] == 0 {
+			continue
+		}
+		barLen := 0
+		if maxAvg > 0 {
+			barLen = int(weekdayAvgs[wd]) * 20 / int(maxAvg)
+		}
+		bar := strings.Repeat("█", barLen)
+		fmt.Printf("%s: %-*s %s\n", wd.String()[:3], 20, bar, utils.FormatDuration(weekdayAvgs[wd]))
+	}
+
+	return nil
 }
 
 func runWorktime(includeComparison bool) error {
@@ -226,14 +410,14 @@ func formatWorktimeTable(comparisons []types.WorktimeComparison, includeComparis
 				previousStr = utils.FormatDuration(comp.Previous.Average)
 			}
 
-			result.WriteString(fmt.Sprintf("%-8s %-12s %s\n",
+			fmt.Fprintf(&result, "%-8s %-12s %s\n",
 				current.Label,
 				currentStr,
-				previousStr))
+				previousStr)
 		} else {
-			result.WriteString(fmt.Sprintf("%-8s %s\n",
+			fmt.Fprintf(&result, "%-8s %s\n",
 				current.Label,
-				currentStr))
+				currentStr)
 		}
 	}
 
